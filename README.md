@@ -9,7 +9,7 @@ This document provides instructions on how to test the R Shiny App being develop
 
 ### 2.1. Downloading the app
 
-The repository can be downloaded *ad hoc* by click
+The repository can be downloaded manually from GitHub or cloned from the command line.
 
 ### 2.2. Setting working directory
 
