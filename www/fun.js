@@ -633,8 +633,8 @@ function drawFunnyAvocado(ctx, xglobal, yglobal, height, width, pitSize) {
   // Brown Pit
   ctx.fillStyle = "#8B5A2B";
   ctx.beginPath();
-  ctx.moveTo(centerX+avocadoWidth, bodyY+avocadoHeight);
-  ctx.ellipse(centerX, bodyY+avocadoHeight-20, 0.5*avocadoWidth, 0.5*avocadoHeight,0, 0, 2*Math.PI,false);
+  ctx.moveTo(centerX+pitSize, bodyY+avocadoHeight);
+  ctx.ellipse(centerX, bodyY+avocadoHeight-0.35*pitSize, pitSize, 1.5*pitSize, 0, 0, 2*Math.PI,false);
   ctx.fill();
   ctx.closePath();
 
@@ -781,7 +781,12 @@ function fruitArea(height, width, pitSize) {
   let totalArea = 4*Math.PI * xradius * yradius/3;
   //pit size was 0.5*height and 0.5*width
   let pitArea = Math.PI * (0.1*xradius+pitradius) * (0.1*yradius+pitradius)/3;
-  return Math.round((totalArea - pitArea)/100);
+  let area_avocado = Math.round((totalArea - pitArea)/100);
+  if (area_avocado < 5) {
+    return 5;
+  } else {
+    return area_avocado;
+  }
 }
 
 function drawMultipleAvocados(ctx, x, y, heightArray, widthArray, pitArray) {
@@ -1001,7 +1006,12 @@ function strawberryArea(height, width, seedSize) {
   let totalArea = Math.PI * stxradius * styradius/3;
   //pit size was 0.5*height and 0.5*width
   let SeedArea = 14*4*Math.PI * 0.5*seedSize * seedSize/2;
-  return Math.round((totalArea - SeedArea)/100);
+  let area = Math.round((totalArea - SeedArea)/100);
+  if (area < 5) {
+    return 5;
+  } else{
+    return area;
+  }
 }
 
 function drawMultipleStrawberries(ctx, x, y, heightArray, widthArray, seedSizeArray) {

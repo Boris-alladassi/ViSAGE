@@ -5,6 +5,8 @@ account: borisalladassi
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14481249
-bundleId: 10088034
+bundleId: 10291525
 url: https://borisalladassi.shinyapps.io/visage/
 version: 1
+asMultiple: FALSE
+asStatic: FALSE

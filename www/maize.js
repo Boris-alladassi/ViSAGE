@@ -93,10 +93,20 @@ function drawMaizePlant(ctx, xglobal, yglobal, height, tasselLength, girth) {
       let x = xcorn;
       let y = ycorn - 0.66*height;
       let index = 2*girth-0.5*tasselLength-0.02*height;
+      let radiusx = 0; 
+      let radiusy = 0;
+
+      if(height > 350){
+        radiusx = 15 + 0.3*index;
+        radiusy = 50 + index;
+      } else {
+        radiusx = 15 + 0.1*index;
+        radiusy = 25 + index;
+      }
   
       ctx.beginPath();
-      ctx.moveTo(x/2+girth+25+0.6*index, y);
-      ctx.ellipse(x/2 +girth+10+0.3*index, y, 15+0.3*index, 50+index, .2, 0, Math.PI * 2, false);
+      ctx.moveTo(x/2+girth/2+1.8*radiusx, y);
+      ctx.ellipse(x/2+girth/2+0.8*radiusx, y, radiusx, radiusy, .3, 0, Math.PI * 2, false);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();

@@ -13,7 +13,7 @@ Royal.blue <- "#001489"
 boris_theme <<- theme_bw() + theme(axis.text = element_text(color = "black", size = 16),
                                    axis.title = element_text(colour = "black", face = "bold", size = 16),
                                    legend.text = element_text(colour = "black", size = 16),
-                                   legend.position = "right", legend.direction = "vertical",
+                                   legend.position = "none",
                                    legend.title = element_blank(),
                                    panel.grid = element_blank(),
                                    panel.background = element_rect(fill = "White", colour = NA),
@@ -24,7 +24,8 @@ boris_theme <<- theme_bw() + theme(axis.text = element_text(color = "black", siz
 ######################------- User Interface of the app ---------- #####################################################
 ########################################################################################################################
 ## Create the user interface for the shiny app. This allows the user to click and interact with the app.
-ui <- tabsetPanel(
+ui <- div(style = "height: 100%; overflow-y: auto;",  # adjust height here
+  tabsetPanel(
   tabPanel("Standard",
            page_fillable(
              theme = bslib::bs_theme(bootswatch = "united"),
@@ -56,26 +57,21 @@ ui <- tabsetPanel(
                         # downloadButton("download", "Download the plot"),
                    ),# End of card Genetic gain plot
                    
-                   card(card_header("Phenotypic correlation"),
-                        actionButton(inputId = "animation", "Animate plot"),
-                        conditionalPanel(
-                          condition = "input.animation == 0",
-                          plotOutput("static.plot")
-                        ),
-                        conditionalPanel(
-                          condition = "input.animation != 0",
-                          imageOutput(outputId = "animatedcorr")
-                        )
-                   ), #End of card Phenotypic correlation
-                   
                    card(card_header("Phenotypic changes"),
                         useShinyjs(),
                         tags$head(tags$script(src = "maize.js")),
                         tags$canvas(id = "myCanvas", width = canvas.width.gbl,
-                                    height = canvas.height.gbl, style = "border:1px solid red;")
+                                    height = canvas.height.gbl, style = "border:1px solid black;")
                    ), #End of card Phenotypic changes
                    
-                   col_widths = c(12,4,8),
+                   card(card_header("Phenotypic distribution"),
+                        selectInput(inputId = "selectGen", label = "Select a generation", choices = c(1:20)),
+                        selectInput(inputId = "selectTrait", label = "Select a trait", choices = unique(SP$traitNames)),
+                        actionButton(inputId = "plotHist", "Plot histogram"),
+                        plotOutput(outputId = "histplot")
+                   ), #End of card Phenotypic distribution
+                   
+                   col_widths = c(12,8,4),
                    row_heights = c()
                  ) #End of layout columns within the big card
                ), #End of big card on the right for output
@@ -83,12 +79,14 @@ ui <- tabsetPanel(
                
                col_widths = c(2,10),
              ) # End of layout columns for Overall tabpanel
-           )# End of page fillable
-  ), #End of STANDARD TabPanel######################------------------- OOOOOOOOO --------------------################################
+           )# End of page fillable for standard panel
+  ), #End of STANDARD TabPanel
+  
+  ######################-------------------  End of STANDARD TabPanel--------------------################################
   
   
-  ############################################------- Begining of Fun Panel ------------##########################################
-  tabPanel("Fun Panel",
+  ############################################------- Beginning of Fun Panel ------------##########################################
+  tabPanel("Fun      ",
            page_fillable(
              theme = bslib::bs_theme(bootswatch = "united"),
              layout_columns(
@@ -120,34 +118,29 @@ ui <- tabsetPanel(
                         # downloadButton("download", "Download the plot"),
                    ),# End of card Genetic gain plot
                    
-                   card(card_header("Phenotypic correlation"),
-                        actionButton(inputId = "animation2", "Animate plot"),
-                        conditionalPanel(
-                          condition = "input.animation2 == 0",
-                          plotOutput(outputId = "static.plot2")
-                        ),
-                        conditionalPanel(
-                          condition = "input.animation2 != 0",
-                          imageOutput(outputId = "animatedcorr2")
-                        )
-                   ), #End of card Phenotypic correlation
-                   
                    card(card_header("Phenotypic changes"),
                         useShinyjs(),
                         tags$head(tags$script(src = "fun.js")),
                         tags$canvas(id = "myCanvas2", width = canvas.width.gbl,
-                                    height = canvas.height.gbl, style = "border:1px solid red;")
+                                    height = canvas.height.gbl, style = "border:1px solid black;")
                    ), #End of card Phenotypic changes
                    
-                   col_widths = c(12,4,8)
+                   card(card_header("Phenotypic distribution"),
+                        selectInput(inputId = "selectGen2", label = "Select a generation", choices = c(1:20)),
+                        uiOutput("selectTrait2"),
+                        actionButton(inputId = "plotHist2", "Plot histogram"),
+                        plotOutput(outputId = "histplot2")
+                   ), #End of card Phenotypic correlation
+                   
+                   col_widths = c(12,8,4)
                  ) #End of layout columns within the big card
                ), #End of big card on the right for output
                
                col_widths = c(2,10)
              ) # End layout columns for Overall tabpanel
            )# End page fillable
-  )
-)
+  ) # End of the overall Tabpanel for Fun
+)) # End of the overall app, TabsetPanel (Standard + Fun)
 
 
 ########################################################################################################################
@@ -157,7 +150,7 @@ ui <- tabsetPanel(
 
 server <- function(input, output, session){
   
-  ## Run the simulation function based on user-defined parameters and the simulate button
+  ## Run the simulation function based on user-defined parameters and the click of the simulate button
   simulation.results <- eventReactive(input$simulate, {
     multi.gener.sim(pop = pop, trait = input$colname, direction = input$direction, 
                     intensity = input$intensity, crop = "Corn")
@@ -175,6 +168,8 @@ server <- function(input, output, session){
     
     selectInput("colname2", label = "Select a trait", choices = trait_choices)
   })
+
+  
   
   ## Now the Fun panel can run the simulation function for the selected crop
   simulation.results2 <- eventReactive(input$simulate2, {
@@ -191,7 +186,58 @@ server <- function(input, output, session){
                     direction = input$direction2, intensity = input$intensity2, crop = input$crop)
   })## Output a list of 4 elements, including GVs and phenotype
   
+  ###################################################################################################
+  ## Plot the phenotypic distribution as a histogram
+  # For the standard panel--------------------------------------------------------------------
+  histogram <- eventReactive(input$plotHist, {
+    req(input$selectGen)  # Ensure input$selectGen is available before execution
+    req(input$selectTrait)  # Ensure input$selectTrait is available before execution
+    req(simulation.results())  # Ensure simulation.results() is available before execution
+    
+    ggplot(data = filter(simulation.results()[["pheno"]], Generation == input$selectGen), aes(x = .data[[input$selectTrait]])) +
+      geom_histogram(color = "white", fill = "steelblue", bins = 10) +
+      labs(x = paste0(input$selectTrait, " (cm)"), y = "Count",
+           title = paste0("Histogram for ", input$selectTrait, " at generation ", input$selectGen)) +
+      boris_theme + theme(panel.grid = element_line())
+  }) # For the Standard panel
   
+  output$histplot <- renderPlot({
+    req(histogram())  # Ensure input$selectGen is available before execution
+    print(histogram())
+  }) # For the Standard panel
+  
+  # For the Fun panel -----------------------------------------------------------------------
+  ## List of choices for traits for the histogram
+  output$selectTrait2 <- renderUI({
+    req(input$crop)  # Ensure input$crop is available before execution
+    req(simulation.results2())  # Ensure simulation.results2() is available before execution
+    
+    trait_choices <- switch(input$crop,
+                            "Corn" = unique(SP$traitNames),
+                            "Avocado" = unique(SP.avocado$traitNames),
+                            "Strawberry" = unique(SP.strawberry$traitNames),
+                            character(0))  # Default empty vector if no match
+    
+    selectInput("selectTrait3", label = "Select a trait", choices = trait_choices)
+  })
+  histogram2 <- eventReactive(input$plotHist2, {
+    req(input$selectGen2)
+    req(input$selectTrait3)
+    req(simulation.results2())  
+    
+    ggplot(data = filter(simulation.results2()[["pheno"]], Generation == input$selectGen2), aes(x = .data[[input$selectTrait3]])) +
+      geom_histogram(color = "white", fill = "steelblue", bins = 10) +
+      labs(x = paste0(input$selectTrait3, " (cm)"), y = "Count",
+           title = paste0("Histogram for ", input$selectTrait3, " at generation ", input$selectGen2)) +
+      boris_theme + theme(panel.grid = element_line())
+  }) # For the Fun panel
+  
+  output$histplot2 <- renderPlot({
+    req(histogram2()) 
+    print(histogram2())
+  }) # For the Fun panel
+  
+  ####################################################################################################
   # Create a summarized table using user-defined percentile
   summary.sim.results <<- eventReactive(c(simulation.results(), input$metric), {
     summary.simulation(data = simulation.results()[["pheno"]], 
@@ -204,14 +250,14 @@ server <- function(input, output, session){
   
   # #################################################################################################################
   ## ###### (Top panel: Create a multi-generation dot and line plots showing genetic progress #####################
-  output$dotplot <- renderPlot({
-    ggarrange(
+  dotplot_temp <- eventReactive(c(simulation.results(), input$metric), {
+    ggpubr::ggarrange(
       ggplot(data = filter(summary.sim.results(), variate == "Height"), aes(x = Generation, y = values)) +
         geom_line(linewidth = 1, color = "#001489") + geom_point(size =4, color = "#001489") +
         coord_cartesian(ylim = c(-10, 300), xlim = c(0,20)) +
         boris_theme + labs(y = "Plant Height (cm)", x = "Generation")+
-        geom_segment(aes(x = 3, y = -8, xend = 17, yend = -8), linewidth = 2, color = "black", arrow = arrow())+
-        annotate(geom="text", x= 10, y = 5, label = "Time", size = 8, color = "black", fontface = "bold")+
+        annotate(geom ="segment",x = 3, y = -8, xend = 17, yend = -8, linewidth = 2, color = "black", arrow = arrow())+
+        annotate(geom = "text", x= 10, y = 5, label = "Time", size = 8, color = "black", fontface = "bold")+
         annotate(geom = "text", x = 2, y = 15, label = "Short", size =8, color = "#001489", fontface = "bold")+
         annotate(geom = "text", x = 2, y = 295, label = "Tall", size =9, color = "#001489", fontface = "bold"),
       
@@ -229,23 +275,26 @@ server <- function(input, output, session){
         annotate(geom = "text", x = 2, y = 1, label = "Short", size =8, color = "black", fontface = "bold") +
         annotate(geom = "text", x = 2, y = 29, label = "Long", size =9, color = "black", fontface = "bold")
       
-      , ncol = 3, nrow = 1)
+      ,ncol = 3, nrow = 1)
+  })
+  
+  output$dotplot <- renderPlot({
+    req(dotplot_temp())  # Ensure input$selectGen is available before execution
+    print(dotplot_temp())
   }) # For the Standard tab
   
-  output$dotplot2 <- renderPlot({
+  dotplot_temp2 <- eventReactive(c(summary.sim.results2(), input$metric2),{
     trait_choices <- switch(input$crop,
-                            
                             "Avocado" = unique(SP.avocado$traitNames),
                             "Corn" = unique(SP$traitNames),
                             "Strawberry" = unique(SP.strawberry$traitNames),
                             character(0))
     annot <- switch(input$crop,
-                    
-                    "Avocado" = c("Short", "Tall", "Narrow", "Wide", "Small", "Big"),
+                    "Avocado" = c("Narrow", "Wide", "Short", "Tall", "Small", "Big"),
                     "Corn" = c("Short", "Tall", "Thin", "Thick", "Short", "Long"),
                     "Strawberry" = c("Short", "Tall", "Thin", "Thick", "Small", "Big"),
                     character(0))
-    ggarrange(
+    ggpubr::ggarrange(
       draw.genetic.gain.plot(dt = summary.sim.results2(), trait = trait_choices[1], col = "#001489",
                              annotate.bottom = annot[1], annotate.top = annot[2], draw.arrow = T),
       draw.genetic.gain.plot(summary.sim.results2(), trait = trait_choices[2], col = "black",
@@ -254,59 +303,12 @@ server <- function(input, output, session){
                              annotate.bottom = annot[5], annotate.top = annot[6], draw.arrow = F)
       
       , ncol = 3, nrow = 1)
+  })
+  output$dotplot2 <- renderPlot({
+    req(dotplot_temp2())
+    print(dotplot_temp2())
   }) # For the fun tab
-  
-  
-  #################################################################################################################
-  ##################### Begining of the code for generating animated plot #########################################
-  animated <- reactive({
-    compute.cor.dt(dt = simulation.results()[["pheno"]])
-  }) ## For Standard panel
-  
-  animated2 <- reactive({
-    compute.cor.dt(dt = simulation.results2()[["pheno"]])
-  })
-  #
-  output$static.plot <- renderPlot({
-    req(animated())
-    ggplot(filter(animated(), Generation == 1), aes(x = Var1, y = Var2, fill = value)) +
-      geom_tile() + boris_theme + labs(x = "", y = "", title = "Generation 1")+
-      theme(axis.ticks = element_blank(), panel.border = element_blank(),
-            plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))+
-      scale_fill_gradient2(low = "navy", mid = "white", high = "darkred", midpoint = 0, limits = c(-1, 1))
-  })
-  #
-  output$static.plot2 <- renderPlot({
-    req(animated2())
-    ggplot(filter(animated2(), Generation == 1), aes(x = Var1, y = Var2, fill = value)) +
-      geom_tile() + boris_theme + labs(x = "", y = "", title = "Generation 1")+
-      theme(axis.ticks = element_blank(), panel.border = element_blank(),
-            plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))+
-      scale_fill_gradient2(low = "navy", mid = "white", high = "darkred", midpoint = 0, limits = c(-1, 1))
-  }) # For fun Panel
-  #
-  animated.gif <- eventReactive(input$animation, {
-    req(animated())
-    generate.animation(dt = animated())
-  })
-  
-  animated.gif2 <- eventReactive(input$animation2, {
-    req(animated2())
-    generate.animation(dt = animated2())
-  }) #For fun Panel
-  #
-  output$animatedcorr <- renderImage({
-    req(animated.gif())
-    list(src = animated.gif(), contentType = "image/gif",
-         alt = "Animated visualization")
-  }, deleteFile = F)
-  
-  output$animatedcorr2 <- renderImage({
-    req(animated.gif2())
-    list(src = animated.gif2(), contentType = "image/gif",
-         alt = "Animated visualization")
-  }, deleteFile = F) ##For fun Panel
-  #
+ 
   
   ############### Integration of JavaScript code ###########################################################
   ### 1. Prepare and format simulation data for JavaScript
@@ -331,7 +333,7 @@ server <- function(input, output, session){
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBackground(ctx, canvas.width, canvas.height);
       drawMultipleMaizePlants(ctx, 50 + canvas.width/5, canvas.height, [%s], [%s], [%s])
-      ", paste(2*plot_values()[[2]], collapse = ","), paste(1.5*plot_values()[[4]], collapse = ","),
+      ", paste(2*plot_values()[[2]], collapse = ","), paste(3*plot_values()[[4]], collapse = ","),
                        paste(2*plot_values()[[3]], collapse = ","))
     # drawMultipleMaizePlants(ctx, x, y, heightArray, tasselLengthArray, girthArray)
     runjs(js_code)
@@ -359,9 +361,10 @@ server <- function(input, output, session){
       drawBackground(ctx2, canvas2.width, canvas2.height);
       drawSun(ctx = ctx2, xsun = canvas2.width, ysun =canvas2.height);
       drawMultipleAvocados(ctx2, 50 + canvas2.width/5, canvas2.height, [%s], [%s], [%s])
-      ", paste(13*plot_values2()[[2]], collapse = ","), paste(10*plot_values2()[[3]], collapse = ","),
-                          paste(10*plot_values2()[[4]], collapse = ","))
+      ", paste(13*plot_values2()[[3]], collapse = ","), paste(10*plot_values2()[[2]], collapse = ","),
+                          paste(5*plot_values2()[[4]], collapse = ","))
       # drawMultipleAvocados(ctx, x, y, heightArray, widthArray, pitArray)
+      
     } else if(input$crop == "Strawberry"){
       js_code2 <- sprintf("
       const canvas2 = document.getElementById('myCanvas2');
