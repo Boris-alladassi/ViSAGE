@@ -2,23 +2,23 @@
 ## The function below runs the multi-generation future simulation of a population
 ### It makes selection and crosses for 20 generations and returns a list of 3: pop.list, a GVs df, and Pheno df
 multi.gener.sim <- function(pop = pop, intensity = 20, direction = "Higher values", 
-                            trait, crop = "Corn"){
+                            trait, crop = "Maize"){
   ####### Embed a simulation --------------- ##
   set.seed(900)
   pop.size = pop@nInd
   col.names <- colnames(pop@gv)
   trait.num = which(col.names == trait)
   direct = ifelse(direction == "Higher values", TRUE, FALSE)
-  # h2.list <- list(Corn = c(0.9, 0.7, 0.8), 
+  # h2.list <- list(Maize = c(0.9, 0.7, 0.8), 
   #                 Avocado = c(0.8, 0.8, 0.9), 
   #                 Strawberry = c(0.8, 0.8, 0.7))
   h2.list <- switch(crop,
-                    "Corn" = c(0.9, 0.7, 0.8),
+                    "Maize" = c(0.9, 0.7, 0.8),
                     "Avocado" = c(0.8, 0.8, 0.9),
                     "Strawberry" = c(0.8, 0.8, 0.9),
                     NULL)
   SP.crop <- switch(crop,
-                    "Corn" = SP,
+                    "Maize" = SP,
                     "Avocado" = SP.avocado,
                     "Strawberry" = SP.strawberry,
                     SP)
@@ -76,12 +76,20 @@ summary.simulation <- function(data, quartile =50, pivot = F){
 ### The first argument is the output from the summary.simulation function
 draw.genetic.gain.plot <- function(dt, trait, col = "black", annotate.bottom, annotate.top, draw.arrow = F){
   tmp_dt <- filter(dt, variate == trait)
+  trait2 <- switch(trait,
+                   "StemDiameter" = "Stem diameter (mm)",
+                   "TasselLength" = "Tassel length (cm)",
+                   "FruitLength" = "Fruit length (cm)",
+                   "FruitWidth"  = "Fruit width (cm)",
+                   "PlantHeight" = "Plant height (cm)",
+                   paste0(trait, " (cm)"))
+  
   label.size <- 5
   y.max <- 1.5*max(tmp_dt$values)
   y.min <- 0.5*min(tmp_dt$values)
   p <- ggplot(data = tmp_dt, aes(x = Generation, y = values)) +
     geom_line(linewidth = 1) + geom_point(size = 4, color = col) +
-    boris_theme + labs(y = paste0(trait, " (cm)"), x = "Generation") +
+    boris_theme + labs(y = trait2, x = "Generation") +
     annotate(geom = "text", x = 2, y = 1, label = annotate.bottom, size =label.size, color = col, fontface = "bold") +
     annotate(geom = "text", x = 2, y = y.max-2, label = annotate.top, size =label.size, color = col, fontface = "bold")
   

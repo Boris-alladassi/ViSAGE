@@ -37,3 +37,7 @@ if(!require(ggpubr)){
   install.packages("ggpubr", dependencies = T)
 }
 
+## The shinyWidgets package helps to show progress bars
+if(!require(shinyWidgets)){
+  install.packages("shinyWidgets", dependencies = T)
+}

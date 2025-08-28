@@ -92,7 +92,7 @@ function drawMaizePlant(ctx, xglobal, yglobal, height, tasselLength, girth) {
   
       let x = xcorn;
       let y = ycorn - 0.66*height;
-      let index = 2*girth-0.5*tasselLength-0.02*height;
+      let index = 4*girth-0.5*tasselLength-0.02*height;
       let radiusx = 0; 
       let radiusy = 0;
 
