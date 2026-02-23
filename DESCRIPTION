@@ -1,0 +1,40 @@
+Package: ViSAGE
+Type: Package
+Title: Visualization and Simulation for Advancing Genetics Education
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Boris Mahule E.", "Alladassi",
+      email = "aboris@illinois.edu",
+      role = c("aut", "cre"), comment = c("0000-0001-9938-2552")
+    ),
+    person(
+      "Alexander Edward", "Lipka",
+      email = "alipka@illinois.edu",
+      role = "aut", comment = c(ORCID = "0000-0003-1571-8528")
+    )
+  )
+Description: Simulation and analysis of quantitative traits within breeding populations.
+    ViSAGE provides an interactive interface for users to
+    1. Simulate quantitative traits with additive, dominance, and epistasis architectures.
+    2. Conduct multi-generation selection using either a directional, stabilizing or diruptive selection type.
+    3. Conduct genome-wide association studies (GWAS) and genome-wide prediction analyses.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    AlphaSimR,
+    bslib,
+    caret,
+    data.table,
+    dplyr,
+    ggplot2,
+    ggpubr,
+    rrBLUP,
+    shiny,
+    shinyBS,
+    simplePHENOTYPES,
+    tibble,
+    tidyr
+Remotes:
+    samuelbfernandes/simplePHENOTYPES
