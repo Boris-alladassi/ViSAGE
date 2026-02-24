@@ -1,27 +1,53 @@
-### Customized theme
-boris_theme <- ggplot2::theme_bw() +
-  ggplot2::theme(
-    axis.text       = ggplot2::element_text(color = "black", size = 16),
-    axis.title      = ggplot2::element_text(colour = "black", face = "bold", size = 16),
-    legend.text     = ggplot2::element_text(colour = "black", size = 16),
-    legend.position = "none",
-    legend.title    = ggplot2::element_blank(),
-    panel.grid      = ggplot2::element_blank(),
-    panel.background = ggplot2::element_rect(fill = "white", colour = NA),
-    panel.border    = ggplot2::element_rect(colour = "black"),
-    text            = ggplot2::element_text(colour = "black", size = 16)
-  )
+
+#' An internal customized ggplot2 theme for ViSAGE
+#'
+#' @noRd
+boris_theme <- function(){
+  ggplot2::theme_bw() +
+    ggplot2::theme(
+      axis.text       = ggplot2::element_text(color = "black", size = 16),
+      axis.title      = ggplot2::element_text(colour = "black", face = "bold", size = 16),
+      legend.text     = ggplot2::element_text(colour = "black", size = 16),
+      legend.position = "none",
+      legend.title    = ggplot2::element_blank(),
+      panel.grid      = ggplot2::element_blank(),
+      panel.background = ggplot2::element_rect(fill = "white", colour = NA),
+      panel.border    = ggplot2::element_rect(colour = "black"),
+      text            = ggplot2::element_text(colour = "black", size = 16)
+    )
+}
+
 
 ####A function to create the founders +++++++++++++++++++++++++ ####
+#' Create a founder population using AlphaSimR.
+#' @description
+#' This function simulates a founder population with specified parameters such
+#' as the number of founders, number of chromosomes, and number of segregating sites.
+#'
+#' @param nfounders an integer representing the number of founders to be simulated.
+#' @param nChrom an integer representing the number of chromosomes in the simulated genome.
+#' @param nSites an integer representing the total number of segregating sites across the genome.
+#' The function will distribute these sites evenly across the specified number of chromosomes.
+#'
+#' @returns An AlphaSimR founder population object.
+#' @noRd
 create_founders <- function(nfounders = 100, nChrom = 10, nSites = 200){
   founders <- AlphaSimR::runMacs(nInd = nfounders, nChr = nChrom, segSites = ceiling(nSites/nChrom), species = "GENERIC", inbred = T)
   return(founders)
 }
 
-### The function below was written by Alex Lipka on February 20, 2024. It is designed
+
+#' Convert to HapMap format
+#' @description
+#' The function below was written by Alex Lipka on February 20, 2024. It is designed
 ## to take SNPs simulated from AlphaSimR and create a
 # "hapmap-formatted" data that can be read into simplePHENOTYPES
-
+#'
+#' @param these.SNPs a matrix of snp maker genotypes
+#' @param this.physical.map a data frame containing the physical map information for snp markers.
+#'
+#' @returns A data frame in HapMap format that can be used as input for simplePHENOTYPES.
+#' @noRd
 get.me.my.SNPs.in.hapmap.format <- function(these.SNPs = NA,
                                             this.physical.map = NA){
   # Subtract the numeric genotypes so that they range from -1,0,1
@@ -42,6 +68,23 @@ get.me.my.SNPs.in.hapmap.format <- function(these.SNPs = NA,
 } #end get.me.my.SNPs.in.hapmap.format
 
 ### An updated function to create the base population (AlphaSimR)
+#' Create a base population using AlphaSimR.
+#' @description
+#' This function simulates a base population based on a founder population and
+#' specified parameters by the user.
+#'
+#' @param founders an AlphaSimR founder population object.
+#' @param nQTN an integer representing the number of quantitative trait nucleotides (QTNs).
+#' @param tMean a integer representing the population mean value for the trait.
+#' @param tVA a numeric value representing the additive genetic variance for the trait.
+#' @param tVD a numeric value representing the dominance genetic variance for the trait.
+#' @param tVE a numeric value representing the epistatic genetic variance for the trait.
+#' @param tdomDeg a numeric value representing the mean dominance degree for the trait.
+#' @param tVDomDeg a numeric value representing the variance of dominance degree for the trait.
+#' @param tHet a numeric value representing the broad-senseheritability of the trait.
+#'
+#' @returns A list containing the genetic architecture 'arch' of the trait and the simulated base population object.
+#' @noRd
 create_base_pop <- function(founders, nQTN = NULL, tMean = NULL,
                             tVA=25, tVD=0, tVE=0, tdomDeg= 0, tVDomDeg = 0, tHet=NULL){
   nChrom = founders@nChr
@@ -77,6 +120,21 @@ create_base_pop <- function(founders, nQTN = NULL, tMean = NULL,
 }
 
 ### An updated function to create the base population (simplePHENOTYPES)
+#' Create a base population using AlphaSimR and simplePHENOTYPES.
+#'
+#' @param founders an AlphaSimR founder population object.
+#' @param tMean a numeric value representing the population mean value for the trait.
+#' @param a_QTNs an integer representing the number of additive QTNs for the trait.
+#' @param d_QTNs an integer representing the number of dominance QTNs for the trait.
+#' @param e_QTNs an integer representing the number of epistatic QTNs for the trait.
+#' @param big_a_eff a numeric value representing the effect size of the major additive QTNs for the trait.
+#' @param a_eff a numeric value representing the effect size of the minor additive QTNs for the trait.
+#' @param d_eff a numeric value representing the effect size of the dominance QTNs for the trait.
+#' @param e_eff a numeric value representing the effect size of the epistatic QTNs for the trait.
+#' @param tHet a numeric value representing the broad-sense heritability of the trait.
+#'
+#' @returns A list containing the genetic architecture 'arch' of the trait and the simulated base population object.
+#' @noRd
 create_base_pop_sp <- function(founders, tMean = NULL,
                             a_QTNs= NULL, d_QTNs = NULL, e_QTNs = NULL,
                             big_a_eff = NULL, a_eff = NULL, d_eff = NULL, e_eff = NULL, tHet=NULL){
@@ -147,7 +205,7 @@ create_base_pop_sp <- function(founders, tMean = NULL,
                    header = TRUE) |> dplyr::pull(snp)
       },
       error = function(e) {
-        message("Additive_Selected_QTNs.txt not found — skipping.")
+        # message("Additive_Selected_QTNs.txt not found — skipping.")
         NULL
       }
     )
@@ -160,7 +218,7 @@ create_base_pop_sp <- function(founders, tMean = NULL,
                    header = TRUE) |> dplyr::pull(snp)
       },
       error = function(e) {
-        message("Dominance_Selected_QTNs.txt not found — skipping.")
+        # message("Dominance_Selected_QTNs.txt not found — skipping.")
         NULL
       }
     )
@@ -173,7 +231,7 @@ create_base_pop_sp <- function(founders, tMean = NULL,
                    header = TRUE) |> dplyr::pull(snp)
       },
       error = function(e) {
-        message("Epistatic_Selected_QTNs.txt not found — skipping.")
+        # message("Epistatic_Selected_QTNs.txt not found — skipping.")
         NULL
       }
     )
@@ -274,7 +332,7 @@ create_base_pop_sp <- function(founders, tMean = NULL,
 #### A function to plot PCA biplot of snp data +++++++++++++++++++++++++ #######
 plot_pca_biplot <- function(pop){
   geno_mat <- AlphaSimR::pullSegSiteGeno(pop)
-  pca_res <- prcomp(geno_mat, center = TRUE, scale. = TRUE)
+  pca_res <- stats::prcomp(geno_mat, center = TRUE, scale. = TRUE)
   pca_var <- (summary(pca_res)$importance)[2,1:2]
   pca_df <- as.data.frame(pca_res$x[,1:5])
 
@@ -282,7 +340,7 @@ plot_pca_biplot <- function(pop){
     ggplot2::geom_point(alpha = 0.7, color = "darkblue") +
     ggplot2::labs(x = paste0("PC1 ", round(100*pca_var[1],2), "%"),
                   y = paste0("PC2 ", round(100*pca_var[2],2), "%")) +
-    boris_theme
+    boris_theme()
   return(plt)
 }
 

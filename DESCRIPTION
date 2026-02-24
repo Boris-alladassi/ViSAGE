@@ -30,6 +30,8 @@ Imports:
     dplyr,
     ggplot2,
     ggpubr,
+    pheatmap,
+    rlang,
     rrBLUP,
     shiny,
     shinyBS,
@@ -38,3 +40,4 @@ Imports:
     tidyr
 Remotes:
     samuelbfernandes/simplePHENOTYPES
+RoxygenNote: 7.3.3
