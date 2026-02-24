@@ -1,3 +1,17 @@
+
+#' Launch the ViSAGE R Shiny app
+#'
+#' @description The `run_visage()` function launches the ViSAGE R Shiny app.
+#' The app is designed to simulate and visualize various genetic
+#' architectures and selection schemes in breeding populations.
+#' The app provides an interactive interface for users to
+#' explore and compare different selection strategies.
+#' It also allows the user to run GWAS and genomic prediction analyses using either
+#' simulated data or user-inputed data.
+#' @usage run_visage()
+#'
+#' @returns A Shiny app object that launches the ViSAGE application.
+#' @export
 run_visage <- function() {
   ########################################################################################################################
   ######################------- User Interface of the app ---------- #####################################################
@@ -210,7 +224,7 @@ run_visage <- function() {
                                                                bslib::card(class = "height: 5vh",
                                                                            shiny::actionButton(inputId = "reset", "Reset the app", class = "btn btn-warning")),
                                                                bslib::card(class = "height: 5vh",
-                                                                           shiny::img(src = "GAPIT_Logo_draft4.jpg", height = "100%", width = "100%"))
+                                                                           shiny::img(src = "Gapit_Logo_draft4.jpg", height = "100%", width = "100%"))
                                                     )
                                       ), #End of LEFT shiny::column
 
@@ -460,7 +474,7 @@ run_visage <- function() {
       ggplot2::ggplot(data = pheno_dtbp, ggplot2::aes(x = phenotype)) +
         ggplot2::geom_histogram(color = "white", fill = "#FF5F0F", bins = 10) +
         ggplot2::labs(x = input$choosetraitbp, y = "Count") +
-        boris_theme
+        boris_theme()
 
     })
 
@@ -480,7 +494,7 @@ run_visage <- function() {
         bp <- base_pop()[[2]]
         geno_dt <- data.frame(ID = bp@id,
                               as.data.frame(AlphaSimR::pullSegSiteGeno(bp)))
-        write.csv(geno_dt, file, row.names = FALSE)
+        utils::write.csv(geno_dt, file, row.names = FALSE)
       }
     )
 
@@ -494,7 +508,7 @@ run_visage <- function() {
         bp <- base_pop()[[2]]
         pheno_dt <- data.frame(ID = bp@id,
                                as.data.frame(AlphaSimR::pheno(bp)))
-        write.csv(pheno_dt, file, row.names = FALSE)
+        utils::write.csv(pheno_dt, file, row.names = FALSE)
       }
     )
 
@@ -505,7 +519,7 @@ run_visage <- function() {
       },
       content = function(file){
         shiny::req(heatmapf())
-        ggsave(file, plot = heatmapf(), device = "jpeg", width = 6, height = 6, dpi = 300)
+        ggplot2::ggsave(file, plot = heatmapf(), device = "jpeg", width = 6, height = 6, dpi = 300)
       }
     )
 
@@ -808,7 +822,7 @@ run_visage <- function() {
         # gp_sim_dt()$snp_data
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$traingenodtgp)
-        read.csv(input$traingenodtgp$datapath, header = TRUE)}
+        utils::read.csv(input$traingenodtgp$datapath, header = TRUE)}
     })
 
     tpheno_reactive <- shiny::reactive({
@@ -820,7 +834,7 @@ run_visage <- function() {
         # gp_sim_dt()$pheno_data
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$phenodtgp)
-        read.csv(input$phenodtgp$datapath, header = TRUE)
+        utils::read.csv(input$phenodtgp$datapath, header = TRUE)
       }
 
     })
@@ -835,7 +849,7 @@ run_visage <- function() {
     output$gpsnpdata <- shiny::renderTable({
       shiny::req(tgeno_reactive())
       if(nrow(tgeno_reactive()) > 50){
-        tgeno_reactive()[50, 1:10]
+        tgeno_reactive()[1:50, 1:10]
       }else{
         tgeno_reactive()[, 1:10]
       }
@@ -843,7 +857,7 @@ run_visage <- function() {
     })
     output$gphistplot<- shiny::renderPlot({
       shiny::req(tpheno_reactive())
-      hist(tpheno_reactive()[[input$choosetraitgp]], main = "",
+      graphics::hist(tpheno_reactive()[[input$choosetraitgp]], main = "",
            xlab = input$choosetraitgp, col = "#0455A4", border = "white")
     })
 
@@ -864,7 +878,7 @@ run_visage <- function() {
 
     ### Output cross-validation results as two plots
     ## 1. Scatter plot
-    scatter <- reactiveVal(NULL) # Create a reactive value to store the scatter plot.
+    scatter <- shiny::reactiveVal(NULL) # Create a reactive value to store the scatter plot.
     output$gpscatterplot <- shiny::renderPlot({
       shiny::req(cv_results())
       p <- plot_prediction(cross_vd_dt = cv_results()[[2]])
@@ -883,7 +897,7 @@ run_visage <- function() {
     )
 
     ## 2. Violin plot
-    violin <- reactiveVal(NULL) # Create a reactive value to store the violin plot.
+    violin <- shiny::reactiveVal(NULL) # Create a reactive value to store the violin plot.
     output$gpviolin <- shiny::renderPlot({
       shiny::req(cv_results())
       set.seed(50)
@@ -928,7 +942,7 @@ run_visage <- function() {
 
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$testgenodtgp)
-        read.csv(input$testgenodtgp$datapath, header = TRUE)
+        utils::read.csv(input$testgenodtgp$datapath, header = TRUE)
       }
 
     })
@@ -959,9 +973,9 @@ run_visage <- function() {
     )
 
     ## print selected individuals based on user-defined selection intensity
-    output$summary_pred <- renderTable({
+    output$summary_pred <- shiny::renderTable({
       shiny::req(pred(), input$selectpct)
-      qt <- quantile(pred()[,2], probs = 1 - input$selectpct / 100)
+      qt <- stats::quantile(pred()[,2], probs = 1 - input$selectpct / 100)
       dplyr::filter(pred(), .data[[colnames(pred())[2]]] >= qt)
     })
 
@@ -972,7 +986,7 @@ run_visage <- function() {
       },
       content = function(file) {
         shiny::req(pred())
-        write.csv(pred(), file, row.names = FALSE)
+        utils::write.csv(pred(), file, row.names = FALSE)
       }
     )
     ###### End of server for Genomic Prediction ++++++ ######

@@ -108,7 +108,7 @@ genomic_prediction_rrblup <- function(
   prediction_df <- dplyr::bind_rows(all_results)
   metrics <- prediction_df |>
     dplyr::group_by(repetition) |>
-    dplyr::summarize(correlation = cor(observed, predicted),
+    dplyr::summarize(correlation = stats::cor(observed, predicted),
                      rmse = sqrt(mean((observed - predicted)^2)))
 
   ## -----------------------------
@@ -194,7 +194,7 @@ predict_gebv_rrblup <- function(
     stringsAsFactors = FALSE
   )
 
-  gebv_df <- na.omit(gebv_df)
+  gebv_df <- stats::na.omit(gebv_df)
 
   return(gebv_df)
 }
@@ -203,7 +203,7 @@ predict_gebv_rrblup <- function(
 plot_prediction <- function(cross_vd_dt){
 
   # Compute correlation
-  cor_test <- cor.test(cross_vd_dt$observed, cross_vd_dt$predicted)
+  cor_test <- stats::cor.test(cross_vd_dt$observed, cross_vd_dt$predicted)
   cor_val  <- round(cor_test$estimate, 3)
   p_val    <- signif(cor_test$p.value, 3)
 
@@ -223,7 +223,7 @@ plot_prediction <- function(cross_vd_dt){
     ggplot2::labs(x = "Observed phenotype", y = "Predicted phenotype") +
     ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
     ggplot2::scale_y_continuous(limits = c(mini, maxi)) +
-    boris_theme
+    boris_theme()
 
   print(p)
 }
@@ -236,7 +236,7 @@ plot_violin <- function(y_vector) {
     ggplot2::geom_point(color = "black", alpha = 0.8,
                         position = ggplot2::position_jitter(width = 0.1)) +
     ggplot2::labs(y = "Predictive ability",x = "") +
-    boris_theme
+    boris_theme()
 
   print(p)
 }
@@ -252,7 +252,7 @@ plot_histogram <- function(y_vector, percent) {
     ggplot2::geom_histogram(bins = nbins, fill = "lightblue", color = "white") +
     ggplot2::geom_vline(xintercept = q_val, color = "red",linetype = "dashed",linewidth = 1) +
     ggplot2::labs(y = "Number of genotypes",x = "Genetic merit") +
-    boris_theme
+    boris_theme()
 
   print(p)
 }
