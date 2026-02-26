@@ -18,7 +18,3 @@ explore and compare different selection strategies.
 It also allows the user to run GWAS and genomic prediction analyses using either
 simulated data or user-inputed data.
 }
-\examples{
-# To run the ViSAGE app, simply call the function as shown below:
-run_visage()
-}

@@ -32,7 +32,9 @@ boris_theme <- function(){
 #' @returns An AlphaSimR founder population object.
 #' @noRd
 create_founders <- function(nfounders = 100, nChrom = 10, nSites = 200){
-  founders <- AlphaSimR::runMacs(nInd = nfounders, nChr = nChrom, segSites = ceiling(nSites/nChrom), species = "GENERIC", inbred = T)
+  founders <- AlphaSimR::runMacs(nInd = nfounders, nChr = nChrom,
+                                 segSites = ceiling(2*nSites/nChrom),
+                                 species = "GENERIC", inbred = T)
   return(founders)
 }
 
@@ -85,10 +87,11 @@ get.me.my.SNPs.in.hapmap.format <- function(these.SNPs = NA,
 #'
 #' @returns A list containing the genetic architecture 'arch' of the trait and the simulated base population object.
 #' @noRd
-create_base_pop <- function(founders, nQTN = NULL, tMean = NULL,
+create_base_pop <- function(founders, sp_object, nQTN = NULL, tMean = NULL,
                             tVA=25, tVD=0, tVE=0, tdomDeg= 0, tVDomDeg = 0, tHet=NULL){
-  nChrom = founders@nChr
-  SP <<- AlphaSimR::SimParam$new(founders)
+  nChrom <- founders@nChr
+  SP <- sp_object
+  SP$resetPed()
 
   ##If trait is pure Additive
   if(tVD == 0 & tVE == 0){
@@ -115,8 +118,14 @@ create_base_pop <- function(founders, nQTN = NULL, tMean = NULL,
   ## Create base population and set heritablity to get pheno
   pop <- AlphaSimR::newPop(founders, simParam = SP)
   pop <- AlphaSimR::setPheno(pop, H2 = tHet, simParam = SP)
-  out <- list(arch = " ", pop = pop)
+  out <- list(arch = " ", pop = pop, QTN_list = NULL)
   return(out)
+}
+
+
+local_sp <- function(f_pop){
+  SP <- AlphaSimR::SimParam$new(f_pop)
+  return(SP)
 }
 
 ### An updated function to create the base population (simplePHENOTYPES)
@@ -135,7 +144,7 @@ create_base_pop <- function(founders, nQTN = NULL, tMean = NULL,
 #'
 #' @returns A list containing the genetic architecture 'arch' of the trait and the simulated base population object.
 #' @noRd
-create_base_pop_sp <- function(founders, tMean = NULL,
+create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
                             a_QTNs= NULL, d_QTNs = NULL, e_QTNs = NULL,
                             big_a_eff = NULL, a_eff = NULL, d_eff = NULL, e_eff = NULL, tHet=NULL){
 
@@ -147,14 +156,16 @@ create_base_pop_sp <- function(founders, tMean = NULL,
     stop("At least one of the effect types must be provided.")
   }
 
-  nChrom = founders@nChr
-  nQTN <- 2*sum(a_QTNs, d_QTNs, e_QTNs, na.rm = T)
-  SP <<- AlphaSimR::SimParam$new(founders)
+  nChrom <- founders@nChr
+  nQTN <- sum(a_QTNs, d_QTNs, 2*e_QTNs, na.rm = T)
+  SP <- sp_object
+  SP$resetPed()
+  ##This is just a dummy trait
   SP$addTraitA(nQtlPerChr = ceiling(nQTN[1]/nChrom), name = "Trait1", mean = tMean[1], var = 125)
 
 
 
-  ## Create base population and set heritablity to get pheno
+  ## Create base population. Note, pop cannot be created unless trait is added to SP.
   pop <- AlphaSimR::newPop(founders, simParam = SP)
 
   ## Set the phenotype for the base population
@@ -165,6 +176,23 @@ create_base_pop_sp <- function(founders, tMean = NULL,
   #The function by Alex transforms the snp data into hapmap format needed for simplePHENOTYPES
   bp_qtls_hapmap <- get.me.my.SNPs.in.hapmap.format(these.SNPs = bp_qtls, this.physical.map = bp_qtl_map)
 
+  ### a nested function to manually select QTNs
+  select_qtns <- function(hapmap_obj, a_qtns, d_qtns, e_qtns, seed_num){
+    set.seed(seed = seed_num)
+    a_list <- sample(hapmap_obj$snp, a_qtns)
+    d_list <- sample(setdiff(hapmap_obj$snp, a_list), d_qtns)
+    e_list <- sample(setdiff(hapmap_obj$snp, c(a_list, d_list)), 2*e_qtns)
+
+    QTN_list <- list()
+    QTN_list$add[[1]] <- a_list
+    QTN_list$dom[[1]] <- d_list
+    QTN_list$epi[[1]] <- e_list
+    return(QTN_list)
+  }
+
+  QTN_list <- select_qtns(hapmap_obj = bp_qtls_hapmap, a_qtns = a_QTNs,
+                          d_qtns = d_QTNs, e_qtns = e_QTNs, seed_num = 1989)
+
   ## Determine the genetic architecture of the trait
   arch <- ""
   if (a_QTNs != 0 & !identical(c(a_eff, big_a_eff), rep(0,2))) arch <- paste0(arch, "A")
@@ -174,127 +202,62 @@ create_base_pop_sp <- function(founders, tMean = NULL,
 
   ### Use simplePHENOTYPES to create the Genetic values and phenotype values for the base population.
   pheno.value <- simplePHENOTYPES::create_phenotypes(geno_obj = bp_qtls_hapmap,
-                                            ntraits = 1,
-                                            h2 = tHet[1],
-                                            mean = tMean[1],
+                                            ntraits = 2,
+                                            h2 = c(tHet, 1),
+                                            mean = rep(tMean,2),
                                             rep = 1,
+                                            #Select QTNs manually
+                                            QTN_list = QTN_list,
                                             #Additive
                                             add_QTN_num = a_QTNs[1],
-                                            big_add_QTN_effect = big_a_eff[1],
-                                            add_effect = a_eff[1],
+                                            big_add_QTN_effect = rep(big_a_eff[1],2),
+                                            add_effect = rep(a_eff[1],2),
                                             #Dominance
                                             dom_QTN_num = d_QTNs[1],
-                                            dom_effect = d_eff[1],
+                                            dom_effect = rep(d_eff[1],2),
                                             #Epistasis
                                             epi_QTN_num = e_QTNs[1],
-                                            epi_effect = e_eff[1],
-
-                                            sim_method = "geometric",
+                                            epi_effect = rep(e_eff[1],2),
+                                            # sim_method = "geometric",
+                                            #specify trait architecture
                                             model = arch,
                                             home_dir = tempdir(),
                                             to_r = TRUE,
                                             quiet = T,
                                             seed = 4000)
 
-### After simulating the phenotype up, need to use the same QTNs for simulating the genetic values.
-### This is because the same QTNs should be used for both the genetic and phenotypic values.
-  if (a_QTNs != 0) {
-    a_QTNs_list <- tryCatch(
-      {
-        read.table(file.path(tempdir(), "Additive_Selected_QTNs.txt"),
-                   header = TRUE) |> dplyr::pull(snp)
-      },
-      error = function(e) {
-        # message("Additive_Selected_QTNs.txt not found — skipping.")
-        NULL
-      }
-    )
-  }
 
-  if (d_QTNs != 0) {
-    d_QTNs_list <- tryCatch(
-      {
-        read.table(file.path(tempdir(), "Dominance_Selected_QTNs.txt"),
-                   header = TRUE) |> dplyr::pull(snp)
-      },
-      error = function(e) {
-        # message("Dominance_Selected_QTNs.txt not found — skipping.")
-        NULL
-      }
-    )
-  }
 
-  if (e_QTNs != 0) {
-    e_QTNs_list <- tryCatch(
-      {
-        read.table(file.path(tempdir(), "Epistatic_Selected_QTNs.txt"),
-                   header = TRUE) |> dplyr::pull(snp)
-      },
-      error = function(e) {
-        # message("Epistatic_Selected_QTNs.txt not found — skipping.")
-        NULL
-      }
-    )
-  }
 
-  QTN_list <- list()
-  if(a_QTNs != 0){QTN_list$add[[1]] <- a_QTNs_list}
-  if(d_QTNs != 0){QTN_list$dom[[1]] <- d_QTNs_list}
-  if(e_QTNs != 0){QTN_list$epi[[1]] <- e_QTNs_list}
-
-  # ## Now genetic values is simulated using that QTN list.
   # gen.value <- simplePHENOTYPES::create_phenotypes(geno_obj = bp_qtls_hapmap,
-  #                                                  ntraits = 1,
-  #                                                  h2 = 1,
-  #                                                  mean = tMean[1],
-  #                                                  rep = 1,
-  #                                                  QTN_list = QTN_list,
-  #                                                  #Additive
-  #                                                  add_QTN_num = a_QTNs[1],
-  #                                                  big_add_QTN_effect = big_a_eff[1],
-  #                                                  add_effect = a_eff[1],
-  #                                                  #Dominance
-  #                                                  dom_QTN_num = d_QTNs[1],
-  #                                                  dom_effect = d_eff[1],
-  #                                                  #Epistasis
-  #                                                  epi_QTN_num = e_QTNs[1],
-  #                                                  epi_effect = e_eff[1],
+  #                                           ntraits = 1,
+  #                                           h2 = 1,
+  #                                           mean = tMean[1],
+  #                                           rep = 1,
+  #                                           #Additive
+  #                                           add_QTN_num = a_QTNs[1],
+  #                                           big_add_QTN_effect = big_a_eff[1],
+  #                                           add_effect = a_eff[1],
+  #                                           #Dominance
+  #                                           dom_QTN_num = d_QTNs[1],
+  #                                           dom_effect = d_eff[1],
+  #                                           #Epistasis
+  #                                           epi_QTN_num = e_QTNs[1],
+  #                                           epi_effect = e_eff[1],
   #
-  #                                                  sim_method = "geometric",
-  #                                                  model = arch,
-  #                                                  home_dir = tempdir(),
-  #                                                  to_r = TRUE,
-  #                                                  quiet = T,
-  #                                                  seed = 4000)
-
-  gen.value <- simplePHENOTYPES::create_phenotypes(geno_obj = bp_qtls_hapmap,
-                                            ntraits = 1,
-                                            h2 = 1,
-                                            mean = tMean[1],
-                                            rep = 1,
-                                            #Additive
-                                            add_QTN_num = a_QTNs[1],
-                                            big_add_QTN_effect = big_a_eff[1],
-                                            add_effect = a_eff[1],
-                                            #Dominance
-                                            dom_QTN_num = d_QTNs[1],
-                                            dom_effect = d_eff[1],
-                                            #Epistasis
-                                            epi_QTN_num = e_QTNs[1],
-                                            epi_effect = e_eff[1],
-
-                                            sim_method = "geometric",
-                                            model = arch,
-                                            home_dir = tempdir(),
-                                            to_r = TRUE,
-                                            quiet = T,
-                                            seed = 4000)
+  #                                           sim_method = "geometric",
+  #                                           model = arch,
+  #                                           home_dir = tempdir(),
+  #                                           to_r = TRUE,
+  #                                           quiet = T,
+  #                                           seed = 4000)
 
   ## Import the genetic and phenotypic values back into the population object
 
-  pop@gv <- as.matrix(gen.value[,2])
+  # pop@gv <- as.matrix(gen.value[,2])
+  pop@gv <- as.matrix(pheno.value[,3])
   pop@pheno <- as.matrix(pheno.value[,2])
-  out <- list(arch = arch, pop = pop)
+  out <- list(arch = arch, pop = pop, QTN_list = QTN_list)
 
   return(out)
 }

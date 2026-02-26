@@ -28,16 +28,20 @@ Imports:
     caret,
     data.table,
     dplyr,
+    DT,
     ggplot2,
     ggpubr,
+    graphics,
     pheatmap,
     rlang,
     rrBLUP,
     shiny,
     shinyBS,
     simplePHENOTYPES,
+    stats,
     tibble,
-    tidyr
+    tidyr,
+    utils
 Remotes:
     samuelbfernandes/simplePHENOTYPES
 RoxygenNote: 7.3.3

@@ -13,6 +13,11 @@
 #' @returns A Shiny app object that launches the ViSAGE application.
 #' @export
 run_visage <- function() {
+  shiny::addResourcePath(
+    "www",
+    system.file("app/www", package = "ViSAGE")
+  )
+
   ########################################################################################################################
   ######################------- User Interface of the app ---------- #####################################################
   ########################################################################################################################
@@ -83,8 +88,8 @@ run_visage <- function() {
                                                                  ),
                                                                  shiny::column(width = 6,
                                                                                bslib::card( bslib::card_header("Phenotypic distribution"),
-                                                                                            shiny::uiOutput("choosetrait_bp"),
-                                                                                            shiny::actionButton(inputId = "plotHistbp", "Plot histogram"),
+                                                                                            # shiny::uiOutput("choosetrait_bp"),
+                                                                                            # shiny::actionButton(inputId = "plotHistbp", "Plot histogram"),
                                                                                             shiny::plotOutput(outputId = "histplotbp"))
                                                                  )
                                                  ),
@@ -224,7 +229,8 @@ run_visage <- function() {
                                                                bslib::card(class = "height: 5vh",
                                                                            shiny::actionButton(inputId = "reset", "Reset the app", class = "btn btn-warning")),
                                                                bslib::card(class = "height: 5vh",
-                                                                           shiny::img(src = "Gapit_Logo_draft4.jpg", height = "100%", width = "100%"))
+                                                                           shiny::tags$img(src = "www/Gapit_Logo_draft4.jpg",
+                                                                                           height = "100%", width = "100%"))
                                                     )
                                       ), #End of LEFT shiny::column
 
@@ -282,8 +288,6 @@ run_visage <- function() {
                                                                            shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using simulated data'",
                                                                                                    shiny::uiOutput("gpseltype"),
                                                                                                    shiny::uiOutput("gpgeneration"),
-                                                                                                   # shiny::actionButton(inputId = "uploadsimgp", "Upload simulated data", class = "btn btn-success"),
-                                                                                                   # shiny::uiOutput("choosetrait2")
                                                                            ), #End of simulated data conditional panel
                                                                            shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data'",
                                                                                                    shiny::fileInput("phenodtgp", "Upload phenotypic data"),
@@ -303,14 +307,14 @@ run_visage <- function() {
                                                                                                    shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using simulated data'",
                                                                                                                            shiny::textOutput(outputId = "describedata"),
                                                                                                                            shiny::uiOutput("gpseltype2"),
-                                                                                                                           shiny::uiOutput("gpgeneration2"),
+                                                                                                                           shiny::uiOutput("gpgeneration2")),
 
-                                                                                                   ),
                                                                                                    shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data'",
-                                                                                                                           shiny::fileInput("testgenodtgp", "Upload genomic data"),
-                                                                                                                           shiny::selectInput(inputId = "GSselType", label = "Choose a type of selection",
-                                                                                                                                              choices = c("Directional_higher", "Directional_lower",
-                                                                                                                                                          "Disruptive", "Stabilizing", "Random"))),
+                                                                                                                           shiny::fileInput("testgenodtgp", "Upload genomic data")),
+
+                                                                                                   shiny::selectInput(inputId = "GSselType", label = "Choose a selection type you wish to apply to the GEBVs",
+                                                                                                                      choices = c("Directional_higher", "Directional_lower",
+                                                                                                                                  "Disruptive", "Stabilizing")),
                                                                                                    shiny::sliderInput("selectpct", "What is your selection intensity (%)?",
                                                                                                                       min = 1, max = 100, step = 1, value = 10),
                                                                                                    shiny::actionButton(inputId = "rungp", "Run prediction model", class = "btn btn-success")
@@ -326,44 +330,54 @@ run_visage <- function() {
                                       # RIGHT shiny::column: Scrollable with nested grid
                                       shiny::column(width = 9,
                                                     shiny::div(class = "height: 90vh; overflow: auto;",
-                                                               shiny::fluidRow(class = "height: 25vh; overflow-y: auto;",#Data quality control
+                                                               shiny::fluidRow(class = "height:25vh; overflow-y:auto;",#Data quality control
                                                                                shiny::column(6,
-                                                                                             bslib::card(bslib::card_header("Phenotypic data"),
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 450,
+                                                                                               bslib::card_header("Phenotypic data"),
                                                                                                          shiny::plotOutput(outputId = "gphistplot"))
                                                                                ),
                                                                                shiny::column(6,
-                                                                                             bslib::card(bslib::card_header("Cross-validation Violin plot"),
-                                                                                                         shiny::tableOutput(outputId = "gpsnpdata"))
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 450,
+                                                                                               bslib::card_header("SNP data"),
+                                                                                                         DT::DTOutput(outputId = "gpsnpdata"))
                                                                                )
                                                                ),#End of shiny::fluidRow GS CV outputs
                                                                shiny::fluidRow(class = "height: 35vh; overflow-y: auto;",#GS CV outputs
                                                                                shiny::column(6,
-                                                                                             bslib::card(bslib::card_header("Cross-validation Scatter plot"),
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 450,
+                                                                                               bslib::card_header("Cross-validation Scatter plot"),
                                                                                                          shiny::plotOutput(outputId = "gpscatterplot"))
                                                                                ),
                                                                                shiny::column(6,
-                                                                                             bslib::card(bslib::card_header("Cross-validation Violin plot"), shiny::plotOutput(outputId = "gpviolin"))
+                                                                                             bslib::card(full_screen = TRUE, height = 450,
+                                                                                                         bslib::card_header("Cross-validation Violin plot"),
+                                                                                                         shiny::plotOutput(outputId = "gpviolin"))
                                                                                )
                                                                ),#End of shiny::fluidRow GS CV outputs
 
-                                                               shiny::fluidRow(class = "height: 10vh",#GS outputs control
-                                                                               shiny::column(6,
-                                                                                             shiny::actionButton(inputId = "scatterplotGP", "Create scatter plot")
-                                                                               ),
-                                                                               shiny::column(6,
-                                                                                             shiny::actionButton("violinplotGS", "Create violin plot")
-                                                                               )
-                                                               ),# End of shiny::fluidRow GS outputs control
+                                                               # shiny::fluidRow(class = "height: 10vh",#GS outputs control
+                                                               #                 shiny::column(6,
+                                                               #                               shiny::actionButton(inputId = "scatterplotGP", "Create scatter plot")
+                                                               #                 ),
+                                                               #                 shiny::column(6,
+                                                               #                               shiny::actionButton("violinplotGS", "Create violin plot")
+                                                               #                 )
+                                                               # ),# End of shiny::fluidRow GS outputs control
 
                                                                shiny::fluidRow(class = "height: 35vh; overflow-y: auto;",#Gp outputs
                                                                                shiny::column(6,
-                                                                                             bslib::card(bslib::card_header("Prediction Histogram"),
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 450,
+                                                                                               bslib::card_header("Prediction Histogram"),
                                                                                                          shiny::plotOutput(outputId = "gphist"))
                                                                                ),
                                                                                shiny::column(6,
-                                                                                             bslib::card(class = "overflow-y: hidden",
+                                                                                             bslib::card(full_screen = TRUE, height = 450,
                                                                                                          bslib::card_header("Selected individuals"),
-                                                                                                         shiny::tableOutput(outputId = "summary_pred"))
+                                                                                                         DT::DTOutput(outputId = "summary_pred"))
                                                                                )
                                                                ),#End of shiny::fluidRow GP outputs
 
@@ -395,7 +409,8 @@ run_visage <- function() {
   ######################------- Server function of the app ---------- ####################################################
   ########################################################################################################################
   server <- function(input, output, session) {
-    #### Server for Population ++++++++++++++++++++++++++####
+
+    #### Beginning of server for POPULATION ++++++++++++++++++++++++++####
 
     founders <- shiny::eventReactive(input$createfounder, {
       shiny::req(input$numFounder, input$numChr, input$totalSeg)
@@ -403,15 +418,28 @@ run_visage <- function() {
         create_founders(nfounders = input$numFounder, nChrom = input$numChr, nSites = input$totalSeg)
       })
     })
+
+    simparms <- eventReactive(founders(),{
+      local_sp(f_pop = founders())
+    })
+
     output$describeffect <- shiny::renderText({"The simulation based effect sizes uses an underlying
     geometric series of QTN effects where a few QTNs have large effects
     and many QTNs have small effects. The acceptable values for QTN effects should be between -1 and 1."
     })
+
     base_pop <- shiny::eventReactive(input$createbasepop, {
       shiny::req(founders(), input$bsh1, input$tMean1)
       shiny::withProgress(message = "Creating base population ...", value = 0, {
         if(input$basepopchoice == "Using effect sizes"){
+          # totnumQTNs <- sum(input$numadd, input$numdom, 2*input$numepi)
+          # if(founders()@nLoci < totnumQTNs){
+          #   stop(paste0("You are simulating more QTNs than segrating sites in the founders.
+          #        Please resimulate founders with at least,", totnumQTNs, "Segregation sites"))
+          # }
+          shiny::req(simparms())
           create_base_pop_sp(founders = founders(),
+                             sp_object = simparms(),
                              tMean = input$tMean1,
                              a_QTNs = input$numadd,
                              d_QTNs = input$numdom,
@@ -423,6 +451,7 @@ run_visage <- function() {
                              tHet = input$bsh1)
         }else if(input$basepopchoice == "Using variances"){
           create_base_pop(founders = founders(),
+                          sp_object = simparms(),
                           nQTN = input$totalNqtn1,
                           tMean = input$tMean1,
                           tVA = input$VA1,
@@ -433,54 +462,64 @@ run_visage <- function() {
         }# End of if-else for base population creation
       })
     })
-    pcaf <- shiny::eventReactive(founders(),{
+
+
+    output$founderpca <- shiny::renderPlot({
+      shiny::req(founders())
       plot_pca_biplot(founders())
     })
-    output$founderpca <- shiny::renderPlot({
-      shiny::req(pcaf())
-      print(pcaf())
-    })
 
-    heatmapbp <- shiny::eventReactive(base_pop(),{
-      pheatmap::pheatmap(AlphaSimR::pullSegSiteGeno(base_pop()[[2]]), cluster_rows = F, cluster_cols = F,
+
+    output$basepopheatmap <- shiny::renderPlot({
+      shiny::req(base_pop(), simparms())
+      pheatmap::pheatmap(AlphaSimR::pullSegSiteGeno(base_pop()[[2]], simParam = simparms()),
+                         cluster_rows = F, cluster_cols = F,
                          show_rownames = T, show_colnames = T,
                          fontsize_row = 5, fontsize_col = 5)
     })
-    output$basepopheatmap <- shiny::renderPlot({
-      shiny::req(heatmapbp())
-      print(heatmapbp())
-    })
 
-    ## Select the trait base population
-    output$choosetrait_bp <- shiny::renderUI({
-      shiny::req(base_pop())
-      tchoices <- SP$traitNames
-      shiny::selectInput("choosetraitbp", label = "Select a trait", choices = tchoices)
-    })
-    pheno_bp <- shiny::reactive({
+    # Select the trait base population
+    # output$choosetrait_bp <- shiny::renderUI({
+    #   shiny::req(base_pop())
+    #   tchoices <- simparms()$traitNames
+    #   shiny::selectInput("choosetraitbp", label = "Select a trait", choices = tchoices)
+    # })
+    # pheno_bp <- shiny::reactive({
+    #   SP <- simparms()
+    #   shiny::req(base_pop())
+    #   b_pop <- base_pop()[[2]]
+    #   dt_trt <- as.data.frame(AlphaSimR::pheno(b_pop))
+    #   colnames(dt_trt) <- SP$traitNames
+    #   data.frame(ID = b_pop@id, dt_trt)
+    #
+    # })
+    #
+    # histbp_reactive <- shiny::eventReactive(input$plotHistbp, {
+    #   # shiny::req(base_pop(), input$choosetraitbp)
+    #   # pheno_dtbp <- pheno_bp()[input$choosetraitbp]
+    #   # pheno_dtbp <- as.data.frame(AlphaSimR::pheno(base_pop()))[input$choosetraitbp]
+    #   shiny::req(base_pop())
+    #   b_pop <- base_pop()[[2]]
+    #   dt_trt <- as.data.frame(AlphaSimR::pheno(b_pop))
+    #   colnames(dt_trt) <- "phenotype"
+    #   ggplot2::ggplot(data = pheno_dtbp, ggplot2::aes(x = phenotype)) +
+    #     ggplot2::geom_histogram(color = "white", fill = "#FF5F0F", bins = 10) +
+    #     ggplot2::labs(x = input$choosetraitbp, y = "Count") +
+    #     boris_theme()
+    #
+    # })
+
+    output$histplotbp <- shiny::renderPlot({
+      # shiny::req(histbp_reactive())
+      # print(histbp_reactive())
       shiny::req(base_pop())
       b_pop <- base_pop()[[2]]
       dt_trt <- as.data.frame(AlphaSimR::pheno(b_pop))
-      colnames(dt_trt) <- SP$traitNames
-      data.frame(ID = b_pop@id, dt_trt)
-
-    })
-
-    histbp_reactive <- shiny::eventReactive(input$plotHistbp, {
-      shiny::req(base_pop(), input$choosetraitbp)
-      pheno_dtbp <- pheno_bp()[input$choosetraitbp]
-      # pheno_dtbp <- as.data.frame(AlphaSimR::pheno(base_pop()))[input$choosetraitbp]
-      colnames(pheno_dtbp) <- "phenotype"
-      ggplot2::ggplot(data = pheno_dtbp, ggplot2::aes(x = phenotype)) +
+      colnames(dt_trt) <- "phenotype"
+      ggplot2::ggplot(data = dt_trt, ggplot2::aes(x = phenotype)) +
         ggplot2::geom_histogram(color = "white", fill = "#FF5F0F", bins = 10) +
-        ggplot2::labs(x = input$choosetraitbp, y = "Count") +
+        ggplot2::labs(x = "Phenotypic values", y = "Number of individuals") +
         boris_theme()
-
-    })
-
-    output$histplotbp <- shiny::renderPlot({
-      shiny::req(histbp_reactive())
-      print(histbp_reactive())
     })
 
 
@@ -493,7 +532,7 @@ run_visage <- function() {
         shiny::req(base_pop())
         bp <- base_pop()[[2]]
         geno_dt <- data.frame(ID = bp@id,
-                              as.data.frame(AlphaSimR::pullSegSiteGeno(bp)))
+                              as.data.frame(AlphaSimR::pullSegSiteGeno(bp, simParam = simparms())))
         utils::write.csv(geno_dt, file, row.names = FALSE)
       }
     )
@@ -538,13 +577,14 @@ run_visage <- function() {
     ## Select the trait for multi-generation selection
     output$multichoosetrait <- shiny::renderUI({
       shiny::req(base_pop())
-      multi_trait_choices <- SP$traitNames
+      multi_trait_choices <- simparms()$traitNames
       shiny::selectInput("multichoosetrait2", label = "Select a trait", choices = multi_trait_choices)
     })
     ## Run multi-geration simulation based on user-defined parameters and the click of the simulate button
     gen_simulation <- shiny::eventReactive(input$multisimulate, {
       shiny::req(base_pop(), input$multichoosetrait2, input$selType, input$intensity, input$NumGener)
       dh <- list(); dl <- list(); dr <- list(); st <- list(); rd <- list(); bp <- base_pop()
+      SP <- simparms();
       shiny::withProgress(message = "Selection simulation in progress ...", value = 0, {
         if("Directional_higher" %in% input$selType){
           if(input$basepopchoice == "Using variances"){
@@ -560,6 +600,7 @@ run_visage <- function() {
           }else if(input$basepopchoice == "Using effect sizes"){
             dh <- multi_generations_selection_sp(initial_generation = bp[[2]],
                                                  SP_object = SP,
+                                                 QTN_list = bp[[3]],
                                                  selectionType = "Directional_higher",
                                                  tSel = input$multichoosetrait2,
                                                  selectPercent = input$intensity,
@@ -592,6 +633,7 @@ run_visage <- function() {
           }else if(input$basepopchoice == "Using effect sizes"){
             dl <- multi_generations_selection_sp(initial_generation = bp[[2]],
                                                  SP_object = SP,
+                                                 QTN_list = bp[[3]],
                                                  selectionType = "Directional_lower",
                                                  tSel = input$multichoosetrait2,
                                                  selectPercent = input$intensity,
@@ -624,6 +666,7 @@ run_visage <- function() {
           }else if(input$basepopchoice == "Using effect sizes"){
             dr <- multi_generations_selection_sp(initial_generation = bp[[2]],
                                                  SP_object = SP,
+                                                 QTN_list = bp[[3]],
                                                  selectionType = "Disruptive",
                                                  tSel = input$multichoosetrait2,
                                                  selectPercent = input$intensity,
@@ -664,6 +707,7 @@ run_visage <- function() {
           }else if(input$basepopchoice == "Using effect sizes"){
             st <- multi_generations_selection_sp(initial_generation = bp[[2]],
                                                  SP_object = SP,
+                                                 QTN_list = bp[[3]],
                                                  selectionType = "Stabilizing",
                                                  tSel = input$multichoosetrait2,
                                                  selectPercent = input$intensity,
@@ -704,6 +748,7 @@ run_visage <- function() {
           }else if(input$basepopchoice == "Using effect sizes"){
             rd <- multi_generations_selection_sp(initial_generation = bp[[2]],
                                                  SP_object = SP,
+                                                 QTN_list = bp[[3]],
                                                  selectionType = "Random_drift",
                                                  tSel = input$multichoosetrait2,
                                                  selectPercent = input$intensity,
@@ -740,6 +785,7 @@ run_visage <- function() {
     gaindt_reactive <- shiny::eventReactive(gen_simulation(), {
       # extract_data(generation_list = gen_simulation(), SP_object = SP,
       #              nTrait = length(SP$traitNames))
+      SP <- simparms()
       options <- c("Directional_higher", "Directional_lower", "Disruptive", "Stabilizing", "Random_drift")
       extracted <- lapply(gen_simulation(), extract_data, SP_object = SP,
                           nTrait = length(SP$traitNames))
@@ -766,7 +812,7 @@ run_visage <- function() {
       indices <- which(sapply(sims, length) != 0)
       # computeVariancePlot(gen_simulation()[[indices[1]]])
 
-      plts <- lapply(sims[indices], computeVariancePlot)
+      plts <- lapply(sims[indices], computeVariancePlot, SP_object = simparms())
       ggpubr::ggarrange(plotlist = plts,
                         ncol = ifelse(length(plts) < 3, 1, 2),
                         nrow = ifelse(length(plts) < 4, 2, 3),
@@ -806,18 +852,18 @@ run_visage <- function() {
       shiny::selectInput("gpgeneration", label = "Select a simulated generation",
                          choices = c(0:input$NumGener))
     })
-    gp_sim_dt <- shiny::eventReactive(gen_simulation(), {
-      shiny::req(gen_simulation(), input$gpseltype, input$gpgeneration)
-      sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
-                  sel_type = input$gpseltype)
-    })
+    # gp_sim_dt <- shiny::eventReactive(gen_simulation(), {
+    #   shiny::req(gen_simulation(), input$gpseltype, input$gpgeneration)
+    #   sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
+    #               sel_type = input$gpseltype, SP_object = simparms())
+    # })
 
     ## Read in training set data
     tgeno_reactive <- shiny::reactive({
       if(input$gpdtchoice == "Using simulated data"){
         shiny::req(input$gpseltype, input$gpgeneration, gen_simulation())
         (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
-                    sel_type = input$gpseltype))$snp_data
+                    sel_type = input$gpseltype, SP_object = simparms()))$snp_data
         # shiny::req(gp_sim_dt())
         # gp_sim_dt()$snp_data
       }else if(input$gpdtchoice == "Using my own data"){
@@ -829,7 +875,7 @@ run_visage <- function() {
       if(input$gpdtchoice == "Using simulated data"){
         shiny::req(input$gpseltype, input$gpgeneration, gen_simulation())
         (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
-                    sel_type = input$gpseltype))$pheno_data
+                    sel_type = input$gpseltype, SP_object = simparms()))$pheno_data
         # shiny::req(gp_sim_dt())
         # gp_sim_dt()$pheno_data
       }else if(input$gpdtchoice == "Using my own data"){
@@ -846,7 +892,7 @@ run_visage <- function() {
       shiny::selectInput("choosetraitgp", label = "Select a trait", choices = trait_choices)
     })
 
-    output$gpsnpdata <- shiny::renderTable({
+    output$gpsnpdata <- DT::renderDT({
       shiny::req(tgeno_reactive())
       if(nrow(tgeno_reactive()) > 50){
         tgeno_reactive()[1:50, 1:10]
@@ -884,7 +930,7 @@ run_visage <- function() {
       p <- plot_prediction(cross_vd_dt = cv_results()[[2]])
       scatter(p) #Store plot p in the reactive value scatter, so that it can be accessed by the download handler
       print(p)
-    }, height = 350, width = 350)
+    })
 
     output$downloadCVScatter <- shiny::downloadHandler(
       filename = function() {
@@ -892,7 +938,8 @@ run_visage <- function() {
       },
       content = function(file) {
         shiny::req(scatter())
-        ggplot2::ggsave(file, plot = scatter(), device = "jpeg", width = 4, height = 4, dpi = 300)
+        ggplot2::ggsave(file, plot = scatter(), device = "jpeg",
+                        width = 4, height = 4, dpi = 300)
       }
     )
 
@@ -904,7 +951,7 @@ run_visage <- function() {
       v <- plot_violin(y_vector = cv_results()[[3]][[2]])
       violin(v) #Store plot v in the reactive value violin
       print(v)
-    }, height = 350, width = 350)
+    })
 
     output$downloadCVViolin <- shiny::downloadHandler(
       filename = function() {
@@ -912,7 +959,8 @@ run_visage <- function() {
       },
       content = function(file) {
         shiny::req(violin())
-        ggplot2::ggsave(file, plot = violin(), device = "jpeg", width = 4, height = 4, dpi = 300)
+        ggplot2::ggsave(file, plot = violin(), device = "jpeg",
+                        width = 4, height = 4, dpi = 300)
       }
     )
 
@@ -920,9 +968,9 @@ run_visage <- function() {
 
     ### If using simulated data
     output$describedata <- shiny::renderText({
-      "Since the training set for cross-validatijon was a simulated data, the prediction set
-      will also be a simulated data. Select below, any simulated data of your choice based on the selection type (s) and generation (s)
-      you simulated in the Selection panel."
+      "Since the training set for cross-validation was a simulated data set, the prediction set
+      will also be a simulated data set. Select below, any simulated data of your choice based on
+      the selection type (s) and generation (s) you simulated in the Selection panel."
     })
     output$gpseltype2 <- shiny::renderUI({
       shiny::req(input$selType)
@@ -938,7 +986,7 @@ run_visage <- function() {
       if(input$gpdtchoice == "Using simulated data"){
         shiny::req(input$gpseltype2, input$gpgeneration2, gen_simulation())
         (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration2),
-                     sel_type = input$gpseltype2))$snp_data
+                     sel_type = input$gpseltype2, SP_object = simparms()))$snp_data
 
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$testgenodtgp)
@@ -955,11 +1003,19 @@ run_visage <- function() {
       })
     })
 
+    #### Selection on test set
+    test_selected <- eventReactive(list(pred(), input$GSselType, input$selectpct),{
+      shiny::req(pred(), input$GSselType, input$selectpct)
+      test_gp_selection(data_frame = pred(), selection_type = input$GSselType,
+                        percent_selected = input$selectpct)
+    })
+
     ## Create and download histogram
     output$gphist <- shiny::renderPlot({
-      shiny::req(pred(), input$selectpct)
-      plot_histogram(y_vector = pred()[,2], percent = input$selectpct)
-    }, height = 250, width = 250)
+      # shiny::req(pred(), input$selectpct)
+      # plot_histogram(y_vector = pred()[,2], percent = input$selectpct)
+      print(test_selected()[[2]])
+    })
 
     output$downloadGPHist <- shiny::downloadHandler(
       filename = function() {
@@ -967,16 +1023,19 @@ run_visage <- function() {
       },
       content = function(file) {
         shiny::req(pred(), input$selectpct)
-        ggplot2::ggsave(file, plot = plot_histogram(y_vector = pred()[,2], percent = input$selectpct),
+        ggplot2::ggsave(file, plot = test_selected()[[2]],
                         device = "jpeg", width = 4, height = 4, dpi = 300)
+        # ggplot2::ggsave(file, plot = plot_histogram(y_vector = pred()[,2], percent = input$selectpct),
+        #                 device = "jpeg", width = 4, height = 4, dpi = 300)
       }
     )
 
     ## print selected individuals based on user-defined selection intensity
-    output$summary_pred <- shiny::renderTable({
+    output$summary_pred <- DT::renderDT({
       shiny::req(pred(), input$selectpct)
-      qt <- stats::quantile(pred()[,2], probs = 1 - input$selectpct / 100)
-      dplyr::filter(pred(), .data[[colnames(pred())[2]]] >= qt)
+      # qt <- stats::quantile(pred()[,2], probs = 1 - input$selectpct / 100)
+      # dplyr::filter(pred(), .data[[colnames(pred())[2]]] >= qt)
+      test_selected()[[1]]
     })
 
     ## Download genomic prediction results as a CSV file.

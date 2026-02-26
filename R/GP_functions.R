@@ -99,7 +99,7 @@ genomic_prediction_rrblup <- function(
         repetition = as.factor(rep),
         genotype   = names(y)[test_idx],
         observed   = y[test_idx],
-        predicted  = gebv[test_idx],
+        predicted  = round(gebv[test_idx],2),
         stringsAsFactors = FALSE
       )
     }
@@ -259,22 +259,24 @@ plot_histogram <- function(y_vector, percent) {
 
 ### This function extract the data needed genomic prediction cross-validation
 ## the multi-generation and selection type simulation
-sim_data_gp <- function(mega_list, generation, sel_type){
+sim_data_gp <- function(mega_list, generation, sel_type, SP_object){
   # Simulate data for GWAS
   # mega_list: list of lists containing the data for each generation and selection type
   # generation: the generation to simulate data for
   # sel_type: the selection type to simulate data for
   names(mega_list) <- c("Directional_higher", "Directional_lower",
                         "Disruptive", "Stabilizing", "Random_drift")
+  SP <- SP_object
 
   # Extract the relevant data from the mega_list
   generation = generation+1 # Adjust for 1-based indexing in R
   obj_list <- mega_list[[sel_type]][[generation]]
 
-  genomic_data <- AlphaSimR::pullSegSiteGeno(obj_list) |>
+  genomic_data <- AlphaSimR::pullSegSiteGeno(obj_list, simParam = SP) |>
     as.data.frame() |>
     tibble::rownames_to_column(var = "ID") |> as.data.frame()
   pheno_data <- as.data.frame(AlphaSimR::pheno(obj_list))
+  colnames(pheno_data) <- "Trait1"
   pheno_data <- data.frame(ID = genomic_data$ID, pheno_data)
   if(length(intersect(genomic_data$ID, pheno_data$ID)) == 0){
     stop("Genomic data and phenotype data do not have any common IDs.")
@@ -284,4 +286,96 @@ sim_data_gp <- function(mega_list, generation, sel_type){
     pheno_data = pheno_data
   )
   return(gp_dt)
+}
+
+### A function to plot selection on test set
+test_gp_selection <- function(data_frame, selection_type, percent_selected) {
+
+  # ---- Checks ----
+  if (!"genetic_merit" %in% names(data_frame)) {
+    stop("Column 'genetic_merit' not found in data_frame.")
+  }
+
+  if (!is.numeric(data_frame$genetic_merit)) {
+    stop("'genetic_merit' must be numeric.")
+  }
+
+  # Convert percent to proportion
+  p <- percent_selected / 100
+  gm <- data_frame$genetic_merit
+
+  # ---- Determine thresholds and selection ----
+  if (selection_type == "Directional_higher") {
+
+    threshold <- stats::quantile(gm, probs = 1 - p, na.rm = TRUE)
+    selected <- gm >= threshold
+
+    vlines <- threshold
+
+  } else if (selection_type == "Directional_lower") {
+
+    threshold <- stats::quantile(gm, probs = p, na.rm = TRUE)
+    selected <- gm <= threshold
+
+    vlines <- threshold
+
+  } else if (selection_type == "Stabilizing") {
+
+    lower <- stats::quantile(gm, probs = (1 - p)/2, na.rm = TRUE)
+    upper <- stats::quantile(gm, probs = 1 - (1 - p)/2, na.rm = TRUE)
+    selected <- gm >= lower & gm <= upper
+
+    vlines <- c(lower, upper)
+
+  } else if (selection_type == "Disruptive") {
+
+    lower <- stats::quantile(gm, probs = p/2, na.rm = TRUE)
+    upper <- stats::quantile(gm, probs = 1 - p/2, na.rm = TRUE)
+    selected <- gm <= lower | gm >= upper
+
+    vlines <- c(lower, upper)
+
+  } else {
+    stop("Invalid selection_type. Choose one of:
+         'Directional_higher',
+         'Directional_lower',
+         'stabilizing',
+         'Disruptive'")
+  }
+
+  # ---- Filtered data ----
+  selected_df <- data_frame[selected, ]
+
+  # ---- Add selection flag for plotting ----
+  plot_df <- data_frame
+  plot_df$Selected <- ifelse(selected, "Selected", "Not Selected")
+
+  # ---- Histogram ----
+  p_hist <- ggplot2::ggplot(plot_df, ggplot2::aes(x = genetic_merit, fill = Selected)) +
+    ggplot2::geom_histogram(
+      bins = 20,
+      color = "white",
+      alpha = 0.9,
+      position = "identity"
+    ) +
+    ggplot2::scale_fill_manual(
+      values = c("Not Selected" = "steelblue",
+                 "Selected" = "darkred")
+    ) +
+    ggplot2::geom_vline(
+      xintercept = vlines,
+      linetype = "dashed",
+      linewidth = 1
+    ) +
+    boris_theme() +
+    ggplot2::labs(
+      title = paste("Selection Type:", selection_type),
+      x = "Genetic Merit",
+      y = "Number of individuals"
+    )
+
+  return(list(
+    selected_data = selected_df,
+    histogram = p_hist
+  ))
 }
