@@ -166,6 +166,7 @@ predict_gebv_rrblup <- function(
     stop("snp_new must have rownames = genotype IDs")
 
   marker_effects <- final_model$u
+  grand_mean <- final_model$beta
   marker_ids <- names(marker_effects)
 
   ## -----------------------------
@@ -184,7 +185,7 @@ predict_gebv_rrblup <- function(
   ## -----------------------------
   ## Prediction
   ## -----------------------------
-  gebv <- as.vector(snp_aligned %*% marker_effects)
+  gebv <- as.vector(snp_aligned %*% marker_effects) + grand_mean
   names(gebv) <- rownames(snp_aligned)
 
   gebv_df <- data.frame(
@@ -214,13 +215,15 @@ plot_prediction <- function(cross_vd_dt){
   # Create annotation text
   label_text <- paste0("r = ", cor_val, "\n", "p = ", p_val)
 
-  p <- ggplot2::ggplot(cross_vd_dt, ggplot2::aes(x = observed, y = predicted, color = repetition)) +
-    ggplot2::geom_point(alpha = 0.6, ) +
+  p <- ggplot2::ggplot(cross_vd_dt, ggplot2::aes(x = predicted, y = observed)) +
+    ggplot2::geom_point(alpha = 0.6, ggplot2::aes(color = repetition)) +
     ggplot2::geom_abline(slope = 1, intercept = 0,
                          linetype = "dashed", color = "blue") +
     ggplot2::annotate("text", x = mini, y = maxi,
                       label = label_text, hjust = 0, vjust = 1, size = 4) +
-    ggplot2::labs(x = "Observed phenotype", y = "Predicted phenotype") +
+    ggplot2::geom_smooth(se = FALSE, color = NA)+
+    ggpubr::stat_regline_equation(label.y.npc = 0.8)+
+    ggplot2::labs(y = "Observed phenotype", x = "Predicted phenotype") +
     ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
     ggplot2::scale_y_continuous(limits = c(mini, maxi)) +
     boris_theme()
@@ -289,6 +292,15 @@ sim_data_gp <- function(mega_list, generation, sel_type, SP_object){
 }
 
 ### A function to plot selection on test set
+#' Title
+#'
+#' @param data_frame data frame
+#' @param selection_type type of selection user defined
+#' @param percent_selected percent selected of individuals
+#'
+#' @returns a plot
+#' @noRd
+#'
 test_gp_selection <- function(data_frame, selection_type, percent_selected) {
 
   # ---- Checks ----
@@ -378,4 +390,55 @@ test_gp_selection <- function(data_frame, selection_type, percent_selected) {
     selected_data = selected_df,
     histogram = p_hist
   ))
+}
+
+############ ----------------Plot GP coincidence----------------- ####################
+#' Scatterplot with highlights of quantile coincidence
+#'
+#' @description
+#' Creates a scatterplot of two numeric variables, adds regression line,
+#' draws quantile cutoffs, and highlights points in the upper‑right and lower-left quantile region.
+#'
+#' @param df A data frame containing the variables.
+#' @param var1 Name of the x‑variable (string).
+#' @param var2 Name of the y‑variable (string).
+#' @param q1 Quantile cutoff for `var1` and `var2` (default 0.9).
+#' @return A ggplot object.
+#' @noRd
+#'
+gp_coincidence_plot <- function(df, var1, var2, q1 = 0.9) {
+
+  # basic checks
+  if (!is.data.frame(df)) stop("`df` must be a data frame.")
+  if (!all(c(var1, var2) %in% names(df))) {
+    stop("`var1` and `var2` must be column names in `df`.")
+  }
+  mini <- min(rbind(df[[var1]], df[[var2]]), na.rm = T)
+  maxi <- max(rbind(df[[var1]], df[[var2]]), na.rm = T)
+
+  # compute quantiles
+  qx <- stats::quantile(df[[var1]], q1, na.rm = TRUE)
+  qy <- stats::quantile(df[[var2]], q1, na.rm = TRUE)
+
+  # flag points
+  df <- df |>
+    dplyr::mutate(coincidence = ifelse((.data[[var1]] > qx & .data[[var2]] > qy) | #OR
+                                         (.data[[var1]] < qx & .data[[var2]] < qy),
+                                       "highlight","normal"))
+  # build plot
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = .data[[var1]], y = .data[[var2]])) +
+    ggplot2::geom_point(ggplot2::aes(color = coincidence, size = coincidence)) +
+    ggplot2::scale_color_manual(values = c("highlight" = "#FF5F05", "normal" = "grey40")) +
+    ggplot2::scale_size_manual(values = c("highlight" = 3, "normal" = 1.5)) +
+    # ggplot2::scale_y_continuous(limits = c(mini, maxi)) +
+    # ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
+    ggplot2::geom_smooth(method = "lm", se = FALSE, color = NA) +
+    ggpubr::stat_regline_equation() +
+    ggplot2::geom_vline(xintercept = qx, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = qy, linetype = "dashed") +
+    ggplot2::labs(x = "Predicted genetic merit", y = "Observed phenotype") +
+    ggplot2::theme(legend.position = "none")+
+    boris_theme()
+
+  return(p)
 }

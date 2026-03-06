@@ -145,7 +145,7 @@ local_sp <- function(f_pop){
 #' @returns A list containing the genetic architecture 'arch' of the trait and the simulated base population object.
 #' @noRd
 create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
-                            a_QTNs= NULL, d_QTNs = NULL, e_QTNs = NULL,
+                            a_QTNs = NULL, d_QTNs = NULL, e_QTNs = NULL,
                             big_a_eff = NULL, a_eff = NULL, d_eff = NULL, e_eff = NULL, tHet=NULL){
 
   ## Required conditions for the simulations
@@ -158,10 +158,11 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
 
   nChrom <- founders@nChr
   nQTN <- sum(a_QTNs, d_QTNs, 2*e_QTNs, na.rm = T)
+
   SP <- sp_object
   SP$resetPed()
   ##This is just a dummy trait
-  SP$addTraitA(nQtlPerChr = ceiling(nQTN[1]/nChrom), name = "Trait1", mean = tMean[1], var = 125)
+  SP$addTraitA(nQtlPerChr = ceiling(nQTN[1]/nChrom), name = "Trait1", mean = 0, var = 64)
 
 
 
@@ -178,16 +179,21 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
 
   ### a nested function to manually select QTNs
   select_qtns <- function(hapmap_obj, a_qtns, d_qtns, e_qtns, seed_num){
-    set.seed(seed = seed_num)
-    a_list <- sample(hapmap_obj$snp, a_qtns)
-    d_list <- sample(setdiff(hapmap_obj$snp, a_list), d_qtns)
-    e_list <- sample(setdiff(hapmap_obj$snp, c(a_list, d_list)), 2*e_qtns)
+    if(identical(c(a_qtns, d_qtns, e_qtns), rep(0,3))){
+      stop("")
+    }else{
+      set.seed(seed = seed_num)
+      a_list <- sample(hapmap_obj$snp, a_qtns)
+      d_list <- sample(setdiff(hapmap_obj$snp, a_list), d_qtns)
+      e_list <- sample(setdiff(hapmap_obj$snp, c(a_list, d_list)), 2*e_qtns)
 
-    QTN_list <- list()
-    QTN_list$add[[1]] <- a_list
-    QTN_list$dom[[1]] <- d_list
-    QTN_list$epi[[1]] <- e_list
-    return(QTN_list)
+      QTN_list <- list()
+      QTN_list$add[[1]] <- a_list
+      QTN_list$dom[[1]] <- d_list
+      QTN_list$epi[[1]] <- e_list
+      return(QTN_list)
+    }
+
   }
 
   QTN_list <- select_qtns(hapmap_obj = bp_qtls_hapmap, a_qtns = a_QTNs,
@@ -199,6 +205,23 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
   if (d_QTNs != 0 & d_eff != 0) arch <- paste0(arch, "D")
   if (e_QTNs != 0 & e_eff != 0) arch <- paste0(arch, "E")
 
+  # obj_names <- c("a_QTNs", "a_QTNs", "big_a_eff", "a_eff",
+  #                "d_QTNs", "d_eff", "e_QTNs", "e_eff")
+  #
+  # for (nm in obj_names) {
+  #   val <- get(nm)
+  #   if (val == 0) assign(nm, NULL)
+  # }
+
+  # if(a_QTNs == 0) a_QTNs <- NULL
+  vars <- c("a_QTNs", "a_QTNs", "big_a_eff", "a_eff",
+            "d_QTNs", "d_eff", "e_QTNs", "e_eff")
+
+  for (v in vars) {
+    if (get(v) == 0) {
+      assign(v, NULL, envir = parent.frame())
+    }
+  }
 
   ### Use simplePHENOTYPES to create the Genetic values and phenotype values for the base population.
   pheno.value <- simplePHENOTYPES::create_phenotypes(geno_obj = bp_qtls_hapmap,
@@ -227,70 +250,16 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
                                             seed = 4000)
 
 
-
-
-  # gen.value <- simplePHENOTYPES::create_phenotypes(geno_obj = bp_qtls_hapmap,
-  #                                           ntraits = 1,
-  #                                           h2 = 1,
-  #                                           mean = tMean[1],
-  #                                           rep = 1,
-  #                                           #Additive
-  #                                           add_QTN_num = a_QTNs[1],
-  #                                           big_add_QTN_effect = big_a_eff[1],
-  #                                           add_effect = a_eff[1],
-  #                                           #Dominance
-  #                                           dom_QTN_num = d_QTNs[1],
-  #                                           dom_effect = d_eff[1],
-  #                                           #Epistasis
-  #                                           epi_QTN_num = e_QTNs[1],
-  #                                           epi_effect = e_eff[1],
-  #
-  #                                           sim_method = "geometric",
-  #                                           model = arch,
-  #                                           home_dir = tempdir(),
-  #                                           to_r = TRUE,
-  #                                           quiet = T,
-  #                                           seed = 4000)
-
   ## Import the genetic and phenotypic values back into the population object
 
   # pop@gv <- as.matrix(gen.value[,2])
   pop@gv <- as.matrix(pheno.value[,3])
   pop@pheno <- as.matrix(pheno.value[,2])
-  out <- list(arch = arch, pop = pop, QTN_list = QTN_list)
+  out <- list(arch = arch, pop = pop, QTN_list = QTN_list, hapmap = bp_qtls_hapmap)
 
   return(out)
 }
 
-# #### A function to create the base population +++++++++++++++++++++++++ ####
-# create_base_pop <- function(founders, nChrom = 10, nQTN = NULL, tMean = NULL, tVar = NULL,
-#                             tCor = 0, tHet=NULL){
-#   SP <<- AlphaSimR::SimParam$new(founders)
-#   ##If trait correlation is zero
-#   if(tCor == 0){
-#     SP$addTraitA(nQtlPerChr = ceiling(nQTN[1]/nChrom), name = "Trait1", mean = tMean[1], var = tVar[1])
-#
-#     if(nQTN[2] > 0 & tVar[2] > 0){
-#       qtl.map <- getQtlMap(trait = 1)
-#       SP$restrSegSites(excludeQtl = qtl.map$id)
-#       ### Add the 1st trait, oligogenic and non correlated to other traits
-#       SP$addTraitA(nQtlPerChr = ceiling(nQTN[2]/nChrom), name = "Trait2", mean = tMean[2], var = tVar[2])
-#     }else{
-#       tHet = tHet[1]
-#     }
-#
-#     ##If trait correlation is nonzero
-#   }else if(tCor != 0){
-#     traitcor <- matrix(c(1,tCor,tCor, 1), ncol = 2, byrow = T)
-#     SP$addTraitA(nQtlPerChr = ceiling(max(nQTN)/nChrom), name = c("Trait1", "Trait2"),
-#                  mean = tMean, var = tVar, corA = traitcor)
-#   }
-#
-#   ## Create base population and set heritablity to get pheno
-#   pop <- AlphaSimR::newPop(founders, simParam = SP)
-#   pop <- AlphaSimR::setPheno(pop, h2 = tHet, simParam = SP)
-#   return(pop)
-# }
 
 #### A function to plot PCA biplot of snp data +++++++++++++++++++++++++ #######
 plot_pca_biplot <- function(pop){
@@ -306,7 +275,3 @@ plot_pca_biplot <- function(pop){
     boris_theme()
   return(plt)
 }
-
-# pheatmap(pullQtlGeno(parents), cluster_rows = F, cluster_cols = F,
-#          show_rownames = T, show_colnames = T,
-#          fontsize_row = 5, fontsize_col = 5)
