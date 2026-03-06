@@ -132,9 +132,9 @@ multi_generations_selection_sp <- function(initial_generation = NULL,
     print(paste("---------------Initiating generation ", i, " of ",
                 selectionType, " selection------------", sep = ""))
 
-    #Store the current generation as the "previous generation". This
-    # will allow us to use info of the previous generation in GWAS and GS
-    previous.generation = initial_generation
+    # #Store the current generation as the "previous generation". This
+    # # will allow us to use info of the previous generation in GWAS and GS
+    # previous.generation = initial_generation
 
     #Breeding decision for ith breeding program...select individuals
     if(selectionType == "Random_drift"){
@@ -159,6 +159,9 @@ multi_generations_selection_sp <- function(initial_generation = NULL,
                                            simParam = SP_object, trait = squaredDeviation, selectTop = FALSE)
     }
 
+    ### Need to update the trait mean
+    new_tMean <- mean(AlphaSimR::gv(selected_inds))
+
     #Make crosses for the next generation
     next_generation = AlphaSimR::randCross(pop = selected_inds, nCrosses = nCross, nProgeny = nProgenyPerCross, simParam = SP_object)
 
@@ -169,9 +172,6 @@ multi_generations_selection_sp <- function(initial_generation = NULL,
 
     #The function by Alex transforms the snp data into hapmap format needed for simplePHENOTYPES
     ngen_qtls_hapmap <- get.me.my.SNPs.in.hapmap.format(these.SNPs = ngen_qtls, this.physical.map = ngen_map)
-
-    ### Need to update the trait mean
-    new_tMean <- mean(AlphaSimR::gv(next_generation))
 
     ### Use simplePHENOTYPES to create the Genetic values and phenotype values for the base population.
 
@@ -198,7 +198,7 @@ multi_generations_selection_sp <- function(initial_generation = NULL,
                                                        home_dir = tempdir(),
                                                        to_r = TRUE,
                                                        quiet = T,
-                                                       seed = 4000)
+                                                       seed = sample(1:100,1))
 
     # gen.value <- simplePHENOTYPES::create_phenotypes(geno_obj = ngen_qtls_hapmap,
     #                                                  ntraits = 1,
@@ -258,44 +258,26 @@ extract_data <- function(generation_list, SP_object = SP, nTrait =1){
     genZeroSize = AlphaSimR::nInd(generation_list[[1]])
     genSize = AlphaSimR::nInd(generation_list[[2]])
 
-    if(nTrait == 1){
-      tmp_list <- function(x){
-        one_gen <- data.frame(phenotype = as.numeric(AlphaSimR::pheno(x)),
-                              genetic_value = as.numeric(AlphaSimR::gv(x)),
-                              breeding_value = as.numeric(AlphaSimR::bv(x, simParam = SP_object))
-        )
-        return(one_gen)
-      }
-
-      pheno <- lapply(generation_list, tmp_list) |>
-        data.table::rbindlist() |> as.data.frame()
-      # |>
-      #   dplyr::mutate(Generation = c(rep(0,genZeroSize), rep(1:(nGen-1), each = genSize)),
-      #                 Trait = "Trait1")
-      pheno <- within(pheno,{
-        Generation <- c(rep(0,genZeroSize), rep(1:(nGen-1), each = genSize))
-        Trait <- rep("Trait1", nrow(pheno))
-      })
-
-      return(pheno)
-    }else if(nTrait >1){
-      tmp_list <- function(x){
-        one_gen <- rbind(as.data.frame(AlphaSimR::pheno(x)) |>
-                           tidyr::pivot_longer(cols = dplyr::everything(), names_to = "Trait", values_to = "phenotype"),
-                         as.data.frame(AlphaSimR::gv(x)) |>
-                           tidyr::pivot_longer(cols = dplyr::everything(), names_to = "Trait", values_to = "genetic_value"),
-                         as.data.frame(AlphaSimR::bv(x, simParam = SP_object)) |>
-                           tidyr::pivot_longer(cols = dplyr::everything(), names_to = "Trait", values_to = "breeding_value")
-        )
-        return(one_gen)
-      }
-
-      pheno <- lapply(generation_list, tmp_list) |>
-        data.table::rbindlist() |> as.data.frame() |>
-        dplyr::mutate(Generation = rep(0:(nGen-1), each = 2*genSize))
-
-      return(pheno)
+    tmp_list <- function(x){
+      one_gen <- data.frame(phenotype = as.numeric(AlphaSimR::pheno(x)),
+                            genetic_value = as.numeric(AlphaSimR::gv(x)),
+                            breeding_value = as.numeric(AlphaSimR::bv(x, simParam = SP_object))
+      )
+      return(one_gen)
     }
+
+    pheno <- lapply(generation_list, tmp_list) |>
+      data.table::rbindlist() |> as.data.frame()
+    # |>
+    #   dplyr::mutate(Generation = c(rep(0,genZeroSize), rep(1:(nGen-1), each = genSize)),
+    #                 Trait = "Trait1")
+    pheno <- within(pheno,{
+      Generation <- c(rep(0,genZeroSize), rep(1:(nGen-1), each = genSize))
+      Trait <- rep("Trait1", nrow(pheno))
+    })
+
+    return(pheno)
+
 
   }
 

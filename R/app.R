@@ -14,15 +14,27 @@
 #' @export
 run_visage <- function() {
   shiny::addResourcePath(
-    "www",
-    system.file("app/www", package = "ViSAGE")
+    prefix = "www",
+    directoryPath = system.file("app/www", package = "ViSAGE")
   )
+
 
   ########################################################################################################################
   ######################------- User Interface of the app ---------- #####################################################
   ########################################################################################################################
 
   ui <- shiny::fluidPage(
+    # shiny::tags$head(
+    #   shiny::tags$link(
+    #     rel = "stylesheet",
+    #     type = "text/css",
+    #     href = "www/custom_modals.css"
+    #   )
+    # ),
+    tags$head(
+      includeCSS(system.file("app/www/custom_modals.css", package = "ViSAGE"))
+    ),
+
     theme = bslib::bs_theme(bootswatch = "united"),
 
     shiny::tabsetPanel(
@@ -33,20 +45,20 @@ run_visage <- function() {
                         shiny::column(width = 3,
                                       shiny::div(class = "height: 90vh; overflow: auto;",
                                                  bslib::card(class = "height: 20vh; overflow-y: hidden;", bslib::card_header("Founders"),
-                                                             shiny::numericInput("numFounder", "Number of founders", value = 100, min = 10),
-                                                             shiny::numericInput("numChr", "Number of chromosomes", value = 10, min = 1),
-                                                             shiny::numericInput("totalSeg", "Number of segregation sites", value = 25, min = 1),
+                                                             shiny::numericInput("numFounder", "Number of founders", value = 100, min = 1),
+                                                             shiny::numericInput("numChr", "Number of chromosomes", value = 1, min = 1),
+                                                             shiny::numericInput("totalSeg", "Number of segregation sites", value = 1, min = 1),
                                                              shiny::actionButton(inputId = "createfounder", "Create founders", class = "btn btn-success")),
 
                                                  bslib::card(class = "height: 30vh; overflow-y: hidden;", bslib::card_header("Base population"),
                                                              shiny::selectInput(inputId = "basepopchoice", label = "How would you like to simulate your trait?",
                                                                                 choices = c("Using effect sizes", "Using variances"),selected = "Using effect sizes"),
                                                              shiny::conditionalPanel(condition = "input.basepopchoice == 'Using effect sizes'",
-                                                                                     shiny::numericInput("tMean1", "Population mean", value = 150, min = 0),
-                                                                                     shiny::numericInput("bsh1", "Broad-sense heritability", value = 0.9, min = 0, max = 1),
+                                                                                     shiny::numericInput("tMean1_sp", "Population mean", value = 0, min = 0),
+                                                                                     shiny::numericInput("bsh1_sp", "Broad-sense heritability", value = 0, min = 0, max = 1),
                                                                                      shiny::numericInput("numadd", "Enter number of additive QTNs", value = 0, min = 0),
                                                                                      shiny::numericInput("numdom", "Enter number of dominance QTNs", value = 0, min = 0),
-                                                                                     shiny::numericInput("numepi", "Enter number of addxadd epistasis QTNs", value = 0, min = 0),
+                                                                                     shiny::numericInput("numepi", "Enter number of pairwise additive x additive epistasis interactions", value = 0, min = 0),
                                                                                      shiny::numericInput("Baddeff", "Enter one large additive effect size", value = 0),
                                                                                      shiny::textOutput(outputId = "describeffect"),
                                                                                      shiny::numericInput("addeff", "Enter first additive effect size", value = 0, min = -1, max = 1),
@@ -55,10 +67,10 @@ run_visage <- function() {
                                                                                      shiny::actionButton(inputId = "createbasepop", "Create base population", class = "btn btn-success")
                                                              ), #End of effect sizes conditional panel
                                                              shiny::conditionalPanel(condition = "input.basepopchoice == 'Using variances'",
-                                                                                     shiny::numericInput("tMean1", "Population mean", value = 150, min = 0),
-                                                                                     shiny::numericInput("bsh1", "Broad-sense heritability", value = 0.9, min = 0, max = 1),
-                                                                                     shiny::numericInput("totalNqtn1", "Number of QTNs", value = 10, min = 2),
-                                                                                     shiny::numericInput("VA1", "Additive variance", value = 64, min = 0),
+                                                                                     shiny::numericInput("tMean1", "Population mean", value = 0),
+                                                                                     shiny::numericInput("bsh1", "Broad-sense heritability", value = 0, min = 0, max = 1),
+                                                                                     shiny::numericInput("totalNqtn1", "Number of QTNs", value = 0, min = 0),
+                                                                                     shiny::numericInput("VA1", "Additive variance", value = 0, min = 0),
                                                                                      shiny::numericInput("VD1", "Dominance variance", value = 0, min = 0),
                                                                                      shiny::numericInput("VEpi1", "Epistasis variance", value = 0, min = 0),
                                                                                      shiny::numericInput("ddeg", "Mean dominance degree", value = 0, min = 0),
@@ -368,17 +380,38 @@ run_visage <- function() {
                                                                # ),# End of shiny::fluidRow GS outputs control
 
                                                                shiny::fluidRow(class = "height: 35vh; overflow-y: auto;",#Gp outputs
-                                                                               shiny::column(6,
-                                                                                             bslib::card(
-                                                                                               full_screen = TRUE, height = 450,
-                                                                                               bslib::card_header("Prediction Histogram"),
-                                                                                                         shiny::plotOutput(outputId = "gphist"))
-                                                                               ),
-                                                                               shiny::column(6,
-                                                                                             bslib::card(full_screen = TRUE, height = 450,
-                                                                                                         bslib::card_header("Selected individuals"),
-                                                                                                         DT::DTOutput(outputId = "summary_pred"))
-                                                                               )
+                                                                               shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using simulated data' & input.gpchoice == 'Yes'",
+                                                                                                       shiny::column(4,
+                                                                                                                     bslib::card(full_screen = TRUE, height = 450,
+                                                                                                                                 bslib::card_header("Prediction accuracy"),
+                                                                                                                                 shiny::plotOutput(outputId = "gp_accuracy1"))
+                                                                                                       ),
+                                                                                                       shiny::column(4,
+                                                                                                                     bslib::card(full_screen = TRUE, height = 450,
+                                                                                                                                 bslib::card_header("Prediction Histogram"),
+                                                                                                                                 shiny::plotOutput(outputId = "gphist1"))
+                                                                                                       ),
+                                                                                                       shiny::column(4,
+                                                                                                                     bslib::card(full_screen = TRUE, height = 450,
+                                                                                                                                 bslib::card_header("Selected individuals"),
+                                                                                                                                 DT::DTOutput(outputId = "summary_pred1"))
+                                                                                                       )
+
+                                                                                                ),
+                                                                               shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data' & input.gpchoice == 'Yes'",
+                                                                                                       shiny::column(6,
+                                                                                                                     bslib::card(
+                                                                                                                       full_screen = TRUE, height = 450,
+                                                                                                                       bslib::card_header("Prediction Histogram"),
+                                                                                                                       shiny::plotOutput(outputId = "gphist2"))
+                                                                                                       ),
+                                                                                                       shiny::column(6,
+                                                                                                                     bslib::card(full_screen = TRUE, height = 450,
+                                                                                                                                 bslib::card_header("Selected individuals"),
+                                                                                                                                 DT::DTOutput(outputId = "summary_pred2"))
+                                                                                                       )
+                                                                               )#End of condiction panel own data
+
                                                                ),#End of shiny::fluidRow GP outputs
 
                                                                shiny::fluidRow(class = "height: 10vh", #Download buttons
@@ -399,7 +432,7 @@ run_visage <- function() {
                                                     )#End of shiny::div
                                       )
                       ))
-      ######################-------------------  End of GP Panel--------------------################################
+      ######################-------------------  End of GP Panel UI--------------------################################
 
     )#End of TabSetPanel
 
@@ -411,25 +444,48 @@ run_visage <- function() {
   server <- function(input, output, session) {
 
     #### Beginning of server for POPULATION ++++++++++++++++++++++++++####
-
-    founders <- shiny::eventReactive(input$createfounder, {
+    founders <- shiny::reactiveVal(NULL)
+    shiny::observeEvent(input$createfounder, {
       shiny::req(input$numFounder, input$numChr, input$totalSeg)
       shiny::withProgress(message = "Creating founders ...", value = 0, {
-        create_founders(nfounders = input$numFounder, nChrom = input$numChr, nSites = input$totalSeg)
-      })
+        new_f <- create_founders(nfounders = input$numFounder, nChrom = input$numChr, nSites = input$totalSeg)
+        founders(new_f)
+        })
     })
 
     simparms <- eventReactive(founders(),{
       local_sp(f_pop = founders())
     })
 
-    output$describeffect <- shiny::renderText({"The simulation based effect sizes uses an underlying
+    output$describeffect <- shiny::renderText({"The simulation based on effect sizes uses an underlying
     geometric series of QTN effects where a few QTNs have large effects
     and many QTNs have small effects. The acceptable values for QTN effects should be between -1 and 1."
     })
 
+    shiny::observeEvent(input$createbasepop, {
+      if (!exists("founders") || is.null(founders()) || length(founders()) == 0) {
+        show_error_modal("Please first create the founders population before creating the base population.")
+      }
+    })
+
+    #### This exception makes sure the number of simulated QTNs is less than the number of loci in the founder population.
+    observeEvent(input$createbasepop, {
+
+      total_loci <- sum(
+        as.numeric(input$numadd),
+        as.numeric(input$numdom),
+        2 * as.numeric(input$numepi)
+      )
+
+      if (founders()@nLoci < total_loci) {
+        show_error_modal(paste0("You are simulating ", total_loci,
+                                " QTNs but the founders population has only ",
+                                founders()@nLoci, " polymorphisms. Please adjust accordingly. Please note that the number of epistasis QTNs ",
+                                "doubles (i.e. 2 QTNs = > 2 pairwise interactions.)"))}
+    })
+
+
     base_pop <- shiny::eventReactive(input$createbasepop, {
-      shiny::req(founders(), input$bsh1, input$tMean1)
       shiny::withProgress(message = "Creating base population ...", value = 0, {
         if(input$basepopchoice == "Using effect sizes"){
           # totnumQTNs <- sum(input$numadd, input$numdom, 2*input$numepi)
@@ -437,10 +493,11 @@ run_visage <- function() {
           #   stop(paste0("You are simulating more QTNs than segrating sites in the founders.
           #        Please resimulate founders with at least,", totnumQTNs, "Segregation sites"))
           # }
-          shiny::req(simparms())
+          shiny::req(founders(), input$bsh1_sp, input$tMean1_sp, simparms())
+
           create_base_pop_sp(founders = founders(),
                              sp_object = simparms(),
-                             tMean = input$tMean1,
+                             tMean = input$tMean1_sp,
                              a_QTNs = input$numadd,
                              d_QTNs = input$numdom,
                              e_QTNs = input$numepi,
@@ -448,8 +505,10 @@ run_visage <- function() {
                              a_eff = input$addeff,
                              d_eff = input$domeff,
                              e_eff = input$epieff,
-                             tHet = input$bsh1)
+                             tHet = input$bsh1_sp)
         }else if(input$basepopchoice == "Using variances"){
+          shiny::req(founders(), input$bsh1, input$tMean1, simparms())
+
           create_base_pop(founders = founders(),
                           sp_object = simparms(),
                           nQTN = input$totalNqtn1,
@@ -995,6 +1054,17 @@ run_visage <- function() {
 
     })
 
+    testpheno_reactive <- shiny::reactive({
+      if(input$gpdtchoice == "Using simulated data"){
+        shiny::req(input$gpseltype2, input$gpgeneration2, gen_simulation())
+        (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration2),
+                     sel_type = input$gpseltype2, SP_object = simparms()))$pheno_data
+        }else{
+          NULL
+        }
+
+    })
+
     pred <- shiny::eventReactive(input$rungp, {
       shiny::req(cv_results(), testgeno_reactive())
       shiny::withProgress(message = "Genomic prediction in progress ...", value = 0, {
@@ -1010,8 +1080,27 @@ run_visage <- function() {
                         percent_selected = input$selectpct)
     })
 
+    #### genomic prediction quantile coincidence
+    coin_plt <- eventReactive(list(pred(),input$selectpct, testpheno_reactive()),{
+        shiny::req(pred(), input$selectpct, testpheno_reactive())
+        data = as.data.frame(cbind(pred()$genetic_merit, testpheno_reactive()[,2]))
+        gp_coincidence_plot(df = data, var1 = colnames(data)[1],
+                            var2 = colnames(data)[2],
+                            q1 = 0.01*(input$selectpct))
+        })#End of coin_plt
+
+    output$gp_accuracy1 <- shiny::renderPlot({
+      print(coin_plt())
+    })
+
     ## Create and download histogram
-    output$gphist <- shiny::renderPlot({
+    output$gphist1 <- shiny::renderPlot({
+      # shiny::req(pred(), input$selectpct)
+      # plot_histogram(y_vector = pred()[,2], percent = input$selectpct)
+      print(test_selected()[[2]])
+    })
+
+    output$gphist2 <- shiny::renderPlot({
       # shiny::req(pred(), input$selectpct)
       # plot_histogram(y_vector = pred()[,2], percent = input$selectpct)
       print(test_selected()[[2]])
@@ -1031,10 +1120,13 @@ run_visage <- function() {
     )
 
     ## print selected individuals based on user-defined selection intensity
-    output$summary_pred <- DT::renderDT({
+    output$summary_pred1 <- DT::renderDT({ #Using simulated data
       shiny::req(pred(), input$selectpct)
-      # qt <- stats::quantile(pred()[,2], probs = 1 - input$selectpct / 100)
-      # dplyr::filter(pred(), .data[[colnames(pred())[2]]] >= qt)
+      test_selected()[[1]]
+    })
+
+    output$summary_pred2 <- DT::renderDT({ #Using own data
+      shiny::req(pred(), input$selectpct)
       test_selected()[[1]]
     })
 

@@ -1,0 +1,56 @@
+/* ============================= */
+/*        MODAL BASE STYLE       */
+/* ============================= */
+
+.custom-modal .modal-content {
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.custom-modal .modal-header {
+  border-bottom: none;
+}
+
+.custom-modal .modal-footer {
+  border-top: none;
+}
+
+/* ============================= */
+/*            ERROR (RED)        */
+/* ============================= */
+
+.modal-error .modal-content {
+  background-color: #e8bfc2;
+  color: #842029;
+  border: 2px solid #842029;
+}
+
+/* ============================= */
+/*           WARNING (ORANGE)    */
+/* ============================= */
+
+.modal-warning .modal-content {
+  background-color: #eadaa6;
+  color: #cc4400;
+  border: 2px solid #cc4400;
+}
+
+/* ============================= */
+/*           SUCCESS (GREEN)     */
+/* ============================= */
+
+.modal-success .modal-content {
+  background-color: #b2edd2;
+  color: #0F5132;
+  border: 2px solid #0F5132;
+}
+
+/* ============================= */
+/*             INFO (BLUE)       */
+/* ============================= */
+
+.modal-info .modal-content {
+  background-color: #aec4e6;
+  color: #063376;
+  border: 2px solid #063376;
+}
