@@ -3,11 +3,11 @@
 show_error_modal <- function(message) {
   shiny::showModal(
     shiny::modalDialog(
-      title = shiny::tagList("❌ Error"),
+      title = shiny::tagList("Error"),
       message,
       easyClose = TRUE,
       footer = shiny::modalButton("Close")#,class = "custom-modal modal-error"
-    )|> tagAppendAttributes(class = "custom-modal modal-error")
+    )|> shiny::tagAppendAttributes(class = "custom-modal modal-error")
   )
 }
 
@@ -15,12 +15,12 @@ show_error_modal <- function(message) {
 show_warning_modal <- function(message) {
   shiny::showModal(
     shiny::modalDialog(
-      title = shiny::tagList("⚠ Warning"),
+      title = shiny::tagList("Warning"),
       message,
       easyClose = TRUE,
       footer = shiny::modalButton("Close")
       # class = "custom-modal modal-warning"
-    ) |> tagAppendAttributes(class = "custom-modal modal-warning")
+    ) |> shiny::tagAppendAttributes(class = "custom-modal modal-warning")
 
   )
 }
@@ -29,7 +29,7 @@ show_warning_modal <- function(message) {
 show_success_modal <- function(message) {
   shiny::showModal(
     shiny::modalDialog(
-      title = shiny::tagList("✔ Success"),
+      title = shiny::tagList("Success"),
       message,
       easyClose = TRUE,
       footer = shiny::modalButton("Close")#,class = "custom-modal modal-success"
@@ -41,7 +41,7 @@ show_success_modal <- function(message) {
 show_info_modal <- function(message) {
   shiny::showModal(
     shiny::modalDialog(
-      title = shiny::tagList("ℹ Information"),
+      title = shiny::tagList("Information"),
       message,
       easyClose = TRUE,
       footer = shiny::modalButton("Close")#,class = "custom-modal modal-info"

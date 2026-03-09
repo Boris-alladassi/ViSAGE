@@ -32,7 +32,7 @@ run_visage <- function() {
     #   )
     # ),
     shiny::tags$head(
-      includeCSS(system.file("app/www/custom_modals.css", package = "ViSAGE"))
+      shiny::includeCSS(system.file("app/www/custom_modals.css", package = "ViSAGE"))
     ),
 
     theme = bslib::bs_theme(bootswatch = "united"),
@@ -453,7 +453,7 @@ run_visage <- function() {
         })
     })
 
-    simparms <- eventReactive(founders(),{
+    simparms <- shiny::eventReactive(founders(),{
       local_sp(f_pop = founders())
     })
 
@@ -469,7 +469,7 @@ run_visage <- function() {
     })
 
     #### This exception makes sure the number of simulated QTNs is less than the number of loci in the founder population.
-    observeEvent(input$createbasepop, {
+    shiny::observeEvent(input$createbasepop, {
 
       total_loci <- sum(
         as.numeric(input$numadd),
@@ -1074,14 +1074,14 @@ run_visage <- function() {
     })
 
     #### Selection on test set
-    test_selected <- eventReactive(list(pred(), input$GSselType, input$selectpct),{
+    test_selected <- shiny::eventReactive(list(pred(), input$GSselType, input$selectpct),{
       shiny::req(pred(), input$GSselType, input$selectpct)
       test_gp_selection(data_frame = pred(), selection_type = input$GSselType,
                         percent_selected = input$selectpct)
     })
 
     #### genomic prediction quantile coincidence
-    coin_plt <- eventReactive(list(pred(),input$selectpct, testpheno_reactive()),{
+    coin_plt <- shiny::eventReactive(list(pred(),input$selectpct, testpheno_reactive()),{
         shiny::req(pred(), input$selectpct, testpheno_reactive())
         data = as.data.frame(cbind(pred()$genetic_merit, testpheno_reactive()[,2]))
         gp_coincidence_plot(df = data, var1 = colnames(data)[1],
