@@ -31,7 +31,7 @@ run_visage <- function() {
     #     href = "www/custom_modals.css"
     #   )
     # ),
-    tags$head(
+    shiny::tags$head(
       includeCSS(system.file("app/www/custom_modals.css", package = "ViSAGE"))
     ),
 
