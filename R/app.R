@@ -469,20 +469,20 @@ run_visage <- function() {
     })
 
     #### This exception makes sure the number of simulated QTNs is less than the number of loci in the founder population.
-    shiny::observeEvent(input$createbasepop, {
-
-      total_loci <- sum(
-        as.numeric(input$numadd),
-        as.numeric(input$numdom),
-        2 * as.numeric(input$numepi)
-      )
-
-      if (founders()@nLoci < total_loci) {
-        show_error_modal(paste0("You are simulating ", total_loci,
-                                " QTNs but the founders population has only ",
-                                founders()@nLoci, " polymorphisms. Please adjust accordingly. Please note that the number of epistasis QTNs ",
-                                "doubles (i.e. 2 QTNs = > 2 pairwise interactions.)"))}
-    })
+    # shiny::observeEvent(input$createbasepop, {
+    #
+    #   total_loci <- sum(
+    #     as.numeric(input$numadd),
+    #     as.numeric(input$numdom),
+    #     2 * as.numeric(input$numepi)
+    #   )
+    #
+    #   if (founders()@nLoci < total_loci) {
+    #     show_error_modal(paste0("You are simulating ", total_loci,
+    #                             " QTNs but the founders population has only ",
+    #                             founders()@nLoci, " polymorphisms. Please adjust accordingly. Please note that the number of epistasis QTNs ",
+    #                             "doubles (i.e. 2 QTNs = > 2 pairwise interactions.)"))}
+    # })
 
 
     base_pop <- shiny::eventReactive(input$createbasepop, {
