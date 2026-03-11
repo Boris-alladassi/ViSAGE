@@ -145,8 +145,8 @@ local_sp <- function(f_pop){
 #' @returns A list containing the genetic architecture 'arch' of the trait and the simulated base population object.
 #' @noRd
 create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
-                            a_QTNs = NULL, d_QTNs = NULL, e_QTNs = NULL,
-                            big_a_eff = NULL, a_eff = NULL, d_eff = NULL, e_eff = NULL, tHet=NULL){
+                            a_QTNs = 0, d_QTNs = 0, e_QTNs = 0,
+                            big_a_eff = 0, a_eff = 0, d_eff = 0, e_eff = 0, tHet=NULL){
 
   ## Required conditions for the simulations
   if(identical(c(a_QTNs,d_QTNs, e_QTNs), rep(0,3))){
@@ -205,23 +205,19 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
   if (d_QTNs != 0 & d_eff != 0) arch <- paste0(arch, "D")
   if (e_QTNs != 0 & e_eff != 0) arch <- paste0(arch, "E")
 
-  # obj_names <- c("a_QTNs", "a_QTNs", "big_a_eff", "a_eff",
-  #                "d_QTNs", "d_eff", "e_QTNs", "e_eff")
-  #
-  # for (nm in obj_names) {
-  #   val <- get(nm)
-  #   if (val == 0) assign(nm, NULL)
-  # }
 
-  # if(a_QTNs == 0) a_QTNs <- NULL
-  vars <- c("a_QTNs", "a_QTNs", "big_a_eff", "a_eff",
-            "d_QTNs", "d_eff", "e_QTNs", "e_eff")
+  a_QTNs   <- if (a_QTNs   == 0) NULL else a_QTNs
+  big_a_eff <- if (big_a_eff == 0) NULL else big_a_eff
+  a_eff    <- if (a_eff    == 0) NULL else a_eff
 
-  for (v in vars) {
-    if (get(v) == 0) {
-      assign(v, NULL, envir = parent.frame())
-    }
-  }
+  d_QTNs   <- if (d_QTNs   == 0) NULL else d_QTNs
+  d_eff    <- if (d_eff    == 0) NULL else d_eff
+
+  e_QTNs   <- if (e_QTNs   == 0) NULL else e_QTNs
+  e_eff    <- if (e_eff    == 0) NULL else e_eff
+
+  # a_QTNs <<- a_QTNs; big_a_eff <<- big_a_eff; a_eff <<- a_eff;
+  # d_QTNs <<- d_QTNs; d_eff <<- d_eff; e_QTNs <<- e_QTNs; e_eff <<- e_eff
 
   ### Use simplePHENOTYPES to create the Genetic values and phenotype values for the base population.
   pheno.value <- simplePHENOTYPES::create_phenotypes(geno_obj = bp_qtls_hapmap,
@@ -232,15 +228,15 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
                                             #Select QTNs manually
                                             QTN_list = QTN_list,
                                             #Additive
-                                            add_QTN_num = a_QTNs[1],
-                                            big_add_QTN_effect = rep(big_a_eff[1],2),
-                                            add_effect = rep(a_eff[1],2),
+                                            add_QTN_num = a_QTNs,
+                                            big_add_QTN_effect = rep(big_a_eff, 2),
+                                            add_effect = list(a_eff, a_eff),
                                             #Dominance
-                                            dom_QTN_num = d_QTNs[1],
-                                            dom_effect = rep(d_eff[1],2),
+                                            dom_QTN_num = d_QTNs,
+                                            dom_effect = list(d_eff, d_eff),
                                             #Epistasis
-                                            epi_QTN_num = e_QTNs[1],
-                                            epi_effect = rep(e_eff[1],2),
+                                            epi_QTN_num = e_QTNs,
+                                            epi_effect = list(e_eff, e_eff),
                                             # sim_method = "geometric",
                                             #specify trait architecture
                                             model = arch,
@@ -249,12 +245,12 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
                                             quiet = T,
                                             seed = 4000)
 
-
   ## Import the genetic and phenotypic values back into the population object
 
   # pop@gv <- as.matrix(gen.value[,2])
-  pop@gv <- as.matrix(pheno.value[,3])
   pop@pheno <- as.matrix(pheno.value[,2])
+  pop@gv <- as.matrix(pheno.value[,3])
+
   out <- list(arch = arch, pop = pop, QTN_list = QTN_list, hapmap = bp_qtls_hapmap)
 
   return(out)
