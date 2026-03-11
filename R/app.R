@@ -462,27 +462,37 @@ run_visage <- function() {
     and many QTNs have small effects. The acceptable values for QTN effects should be between -1 and 1."
     })
 
-    shiny::observeEvent(input$createbasepop, {
-      if (!exists("founders") || is.null(founders()) || length(founders()) == 0) {
-        show_error_modal("Please first create the founders population before creating the base population.")
-      }
-    })
 
-    #### This exception makes sure the number of simulated QTNs is less than the number of loci in the founder population.
-    # shiny::observeEvent(input$createbasepop, {
-    #
-    #   total_loci <- sum(
-    #     as.numeric(input$numadd),
-    #     as.numeric(input$numdom),
-    #     2 * as.numeric(input$numepi)
-    #   )
-    #
-    #   if (founders()@nLoci < total_loci) {
-    #     show_error_modal(paste0("You are simulating ", total_loci,
-    #                             " QTNs but the founders population has only ",
-    #                             founders()@nLoci, " polymorphisms. Please adjust accordingly. Please note that the number of epistasis QTNs ",
-    #                             "doubles (i.e. 2 QTNs = > 2 pairwise interactions.)"))}
-    # })
+    ## This exception makes sure the founder population is not NULL and
+    ## the number of simulated QTNs is not less than the number of loci in the founder population.
+    shiny::observeEvent(input$createbasepop, {
+      if (is.null(founders())) {
+        show_error_modal("Please first create the founders population before creating the base population.")
+        return(NULL)
+
+      }
+      # else{
+      #   total_loci <- sum(
+      #     as.numeric(input$numadd),
+      #     as.numeric(input$numdom),
+      #     2 * as.numeric(input$numepi),
+      #     na.rm = TRUE
+      #   )
+      #
+      #   if (founders()@nLoci < total_loci) {
+      #
+      #     show_error_modal(
+      #       paste0("You are simulating ", total_loci," QTNs but the founders population has only ", founders()@nLoci,
+      #         " polymorphisms. Please adjust accordingly. ", "Note that the number of epistasis QTNs doubles ",
+      #         "(i.e., If you enter 1, 2 QTNs will be used to simulate 1 pairwise interaction).")
+      #     )
+      #
+      #     return(NULL)
+      #   }#End of nested if statement.
+      #
+      # }#End of else statement.
+
+    })
 
 
     base_pop <- shiny::eventReactive(input$createbasepop, {
