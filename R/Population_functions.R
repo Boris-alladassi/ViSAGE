@@ -32,9 +32,9 @@ boris_theme <- function(){
 #' @returns An AlphaSimR founder population object.
 #' @noRd
 create_founders <- function(nfounders = 100, nChrom = 10, nSites = 200){
-  founders <- AlphaSimR::runMacs(nInd = nfounders, nChr = nChrom,
+  founders <- AlphaSimR::quickHaplo(nInd = nfounders, nChr = nChrom,
                                  segSites = ceiling(2*nSites/nChrom),
-                                 species = "GENERIC", inbred = T)
+                                 inbred = FALSE)
   return(founders)
 }
 

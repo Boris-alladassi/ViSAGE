@@ -24,13 +24,10 @@ run_visage <- function() {
   ########################################################################################################################
 
   ui <- shiny::fluidPage(
-    # shiny::tags$head(
-    #   shiny::tags$link(
-    #     rel = "stylesheet",
-    #     type = "text/css",
-    #     href = "www/custom_modals.css"
-    #   )
-    # ),
+    shiny::tags$head(
+      shiny::tags$link(rel = "stylesheet", href = "www/layout.css")
+    ),
+
     shiny::tags$head(
       shiny::includeCSS(system.file("app/www/custom_modals.css", package = "ViSAGE"))
     ),
@@ -43,7 +40,7 @@ run_visage <- function() {
                       shiny::fluidRow(
                         # LEFT shiny::column: Fixed layout
                         shiny::column(width = 3,
-                                      shiny::div(class = "height: 90vh; overflow: auto;",
+                                      shiny::div(class = "scroll-col",    #"height: 90vh; overflow-y: auto;",
                                                  bslib::card(class = "height: 20vh; overflow-y: hidden;", bslib::card_header("Founders"),
                                                              shiny::numericInput("numFounder", "Number of founders", value = 100, min = 1),
                                                              shiny::numericInput("numChr", "Number of chromosomes", value = 1, min = 1),
@@ -59,7 +56,7 @@ run_visage <- function() {
                                                                                      shiny::numericInput("numadd", "Enter number of additive QTNs", value = 0, min = 0),
                                                                                      shiny::numericInput("numdom", "Enter number of dominance QTNs", value = 0, min = 0),
                                                                                      shiny::numericInput("numepi", "Enter number of pairwise additive x additive epistasis interactions", value = 0, min = 0),
-                                                                                     shiny::numericInput("Baddeff", "Enter one large additive effect size", value = 0),
+                                                                                     shiny::numericInput("Baddeff", "Enter one large additive effect size (Optional)", value = 0),
                                                                                      shiny::textOutput(outputId = "describeffect"),
                                                                                      shiny::numericInput("addeff", "Enter first additive effect size", value = 0, min = -1, max = 1),
                                                                                      shiny::numericInput("domeff", "Enter first dominance effect size", value = 0, min = -1, max = 1),
@@ -86,7 +83,7 @@ run_visage <- function() {
 
                         # RIGHT shiny::column: Scrollable with nested grid
                         shiny::column(width = 9,
-                                      shiny::div(class = "height: 90vh; overflow: auto;",
+                                      shiny::div(class = "scroll-col", # "height: 90vh; overflow-y: auto;",
                                                  shiny::fluidRow(class = "height: 30vh; overflow-y: hidden;",
                                                                  shiny::column(width = 12,
                                                                                bslib::card( bslib::card_header("Genomic PCA for founders"),
@@ -133,7 +130,7 @@ run_visage <- function() {
 
                                       # LEFT shiny::column: Fixed layout
                                       shiny::column(width = 3,
-                                                    shiny::div(class = "height: 90vh; overflow: auto;",
+                                                    shiny::div(class = "scroll-col", #class = "height: 90vh; overflow: auto;",
                                                                bslib::card(class = "height: 55vh; overflow-y: hidden;", bslib::card_header("Selection decisions"),
                                                                            shiny::uiOutput("multichoosetrait"),
                                                                            # shiny::selectInput("multichoosetrait", label = "Select a trait", choices = c("Trait 1", "Trait 2")),
@@ -155,9 +152,9 @@ run_visage <- function() {
                                                     )#End of shiny::div
                                       ),# End of LEFT shiny::column
 
-                                      # RIGHT shiny::column: Scrollable with nested grid
+                                      # RIGHT column: Scrollable with nested grid
                                       shiny::column(width = 9,
-                                                    shiny::div(class = "height: 90vh; overflow: auto;",
+                                                    shiny::div(class = "scroll-col", #class = "height: 90vh; overflow: auto;",
 
                                                                shiny::fluidRow(
                                                                  shiny::column(12,
@@ -204,9 +201,9 @@ run_visage <- function() {
       shiny::tabPanel("GWAS",
                       shiny::fluidRow(class = "height: 95vh; overflow-y: auto;",
 
-                                      # LEFT shiny::column: Fixed layout
+                                      # LEFT column: Fixed layout
                                       shiny::column(width = 3,
-                                                    shiny::div(class = "height: 90vh; overflow: auto;",
+                                                    shiny::div(class = "scroll-col", #class = "height: 90vh; overflow: auto;",
                                                                bslib::card(class = "height: 80vh; overflow-y: hidden;", bslib::card_header("GWAS Analysis"),
                                                                            shiny::selectInput("gwasdtchoice", label = "How would you like to run GWAS?",
                                                                                               choices = c("Using simulated data", "Using my own data"),
@@ -215,11 +212,18 @@ run_visage <- function() {
                                                                              condition = "input.gwasdtchoice == 'Using simulated data'",
                                                                              shiny::uiOutput("gwasseltype"),
                                                                              shiny::uiOutput("gwasgeneration")
+
                                                                            ), #End of simulated data conditional panel
                                                                            shiny::conditionalPanel(
                                                                              condition = "input.gwasdtchoice == 'Using my own data'",
-                                                                             shiny::fileInput("phenodtgwas", "Upload phenotypic data"),
-                                                                             shiny::fileInput("genodtgwas", "Upload genomic data"),
+                                                                             shiny::fileInput("phenodtgwas", "Upload phenotypic data",
+                                                                                              accept = c(".csv", ".txt")),
+                                                                             shiny::fileInput("gwashapmap", "Upload genomic data (HapMap format)",
+                                                                                              accept = c(".csv", ".txt")),
+                                                                             shiny::fileInput("genodtgwas", "Upload genomic data (Numerical format)",
+                                                                                              accept = c(".csv", ".txt")),
+                                                                             shiny::fileInput("genomapgwas", "Upload genetic map data (Numerical format)",
+                                                                                              accept = c(".csv", ".txt")),
                                                                              shiny::fileInput("qmatrix", "Upload population structure Q matrix"),
                                                                              shiny::icon("info-circle", class = "text-info", id = "run_info"),
                                                                              shinyBS::bsTooltip(
@@ -231,10 +235,9 @@ run_visage <- function() {
                                       the presence of subsets of individuals more closely related to each other than
                                       to individuals in other subsets.The Q matrix can be obtained from PCA or STRUCTURE analysis."),
                                                                              shiny::fileInput("kmatrix", "Upload kinship K matrix"),
-                                                                             shiny::selectInput("alltrait", label = "Analyze all the traits?", choices = c("No", "Yes")),
-                                                                             shiny::uiOutput("gwaschoosetrait", label = "Select the trait shiny::column"),
+                                                                             shiny::selectInput("alltrait", label = "Analyze all the traits?", choices = c("No", "Yes"))
                                                                            ), #End of conditional panel for using own data
-
+                                                                           shiny::uiOutput("gwaschoosetrait", label = "Select the trait shiny::column"),
                                                                            shiny::selectInput("gwasmodel", label = "Select one GWAS model", choices = c("GLM", "MLM")),
                                                                            shiny::numericInput("numpcs", "Enter number of PCs", value = 3, min = 1),
                                                                            shiny::actionButton(inputId = "rungwas", "Run GWAS", class = "btn btn-success")),
@@ -246,27 +249,43 @@ run_visage <- function() {
                                                     )
                                       ), #End of LEFT shiny::column
 
-                                      # RIGHT shiny::column: Scrollable with nested grid
+                                      # RIGHT column: Scrollable with nested grid
                                       shiny::column(width = 9,
-                                                    shiny::div(class = "height: 90vh; overflow: auto;",
-
-                                                               shiny::fluidRow(class = "vh-70",#GWAS outputs
-                                                                               shiny::column(8,
-                                                                                             bslib::card(bslib::card_header("Manhathan plot"), shiny::plotOutput(outputId = "manhathanplot"))
-                                                                               ),
-                                                                               shiny::column(4,
-                                                                                             bslib::card(bslib::card_header("Q-Q plot"), shiny::plotOutput(outputId = "qqplot"))
-                                                                               )
-                                                               ),#End of shiny::fluidRow GWAS outputs
-                                                               shiny::fluidRow(class = "height: 10vh", #GWAS outputs control
-
+                                                    shiny::div(class = "scroll-col", #class = "height: 90vh; overflow: auto;",
+                                                               shiny::fluidRow(class = "height:20vh; overflow-y:auto;",#Data quality control
                                                                                shiny::column(6,
-                                                                                             shiny::actionButton(inputId = "plotGWAS", "Create Manhattan plot")
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 400,
+                                                                                               bslib::card_header("Phenotypic data"),
+                                                                                               shiny::plotOutput(outputId = "gwashistplot"))
                                                                                ),
                                                                                shiny::column(6,
-                                                                                             shiny::actionButton("plotQQ", "Create Q-Q plot")
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 400,
+                                                                                               bslib::card_header("SNP data"),
+                                                                                               DT::DTOutput(outputId = "gwassnpdata"))
                                                                                )
-                                                               ), #End of shiny::fluidRow GWAS outputs control
+                                                               ),#End of Data quality control
+
+                                                               shiny::fluidRow(class = "height: 20vh",#GWAS outputs
+                                                                               shiny::column(6,
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 400,
+                                                                                               bslib::card_header("GWAS results"),
+                                                                                               DT::DTOutput(outputId = "gwasresultdt"))
+                                                                               ),
+                                                                               shiny::column(6,
+                                                                                             bslib::card(
+                                                                                               full_screen = TRUE, height = 400,
+                                                                                               bslib::card_header("Q-Q plot"),
+                                                                                               shiny::plotOutput(outputId = "qqplot"))
+                                                                               )
+                                                               ),#End of shiny::fluidRow GWAS Manhattan plot
+                                                               shiny::fluidRow(class = "height: 20vh",#GWAS outputs
+                                                                               bslib::card(full_screen = TRUE, height = 400,
+                                                                                           bslib::card_header("Manhathan plot"),
+                                                                                           shiny::plotOutput(outputId = "manhathanplot"))
+                                                               ),#End of shiny::fluidRow Manhattan plot
 
                                                                shiny::fluidRow(class = "height: 10vh",#Download buttons
                                                                                shiny::column(4,
@@ -276,7 +295,7 @@ run_visage <- function() {
                                                                                              shiny::downloadButton("downloadGWASP", "Download Manhattan plot")
                                                                                ),
                                                                                shiny::column(4,
-                                                                                             shiny::downloadButton("downloadQQ", "Download Q-Q plot")
+                                                                                             shiny::downloadButton("downloadGWASQQ", "Download Q-Q plot")
                                                                                )
                                                                ) # End of shiny::fluidRow download buttons
 
@@ -290,9 +309,9 @@ run_visage <- function() {
                       shiny::fluidRow(class = "height: 90vh; overflow-y: auto;",
                                       # class = "height: 95vh; overflow-y: auto;",
 
-                                      # LEFT shiny::column: Fixed layout
+                                      # LEFT column: Fixed layout
                                       shiny::column(width = 3,
-                                                    shiny::div(class = "height: 90vh; overflow: auto;",
+                                                    shiny::div(class = "scroll-col", #class = "height: 90vh; overflow: auto;",
                                                                bslib::card(class = "height: 60; overflow-y: hidden;", bslib::card_header("Training set"),
                                                                            shiny::selectInput("gpdtchoice", label = "How would you like to run genomic prediction?",
                                                                                               choices = c("Using simulated data", "Using my own data"),
@@ -331,7 +350,7 @@ run_visage <- function() {
                                                                                                                       min = 1, max = 100, step = 1, value = 10),
                                                                                                    shiny::actionButton(inputId = "rungp", "Run prediction model", class = "btn btn-success")
 
-                                                                                                   ) ## End card for prediction set
+                                                                                       ) ## End card for prediction set
 
                                                                ), #End of conditional panel for prediction set
                                                                bslib::card(class = "height: 10vh",
@@ -339,36 +358,36 @@ run_visage <- function() {
                                                     )
                                       ),
 
-                                      # RIGHT shiny::column: Scrollable with nested grid
+                                      # RIGHT column: Scrollable with nested grid
                                       shiny::column(width = 9,
-                                                    shiny::div(class = "height: 90vh; overflow: auto;",
+                                                    shiny::div(class = "scroll-col", #class = "height: 90vh; overflow: auto;",
                                                                shiny::fluidRow(class = "height:25vh; overflow-y:auto;",#Data quality control
                                                                                shiny::column(6,
                                                                                              bslib::card(
                                                                                                full_screen = TRUE, height = 450,
                                                                                                bslib::card_header("Phenotypic data"),
-                                                                                                         shiny::plotOutput(outputId = "gphistplot"))
+                                                                                               shiny::plotOutput(outputId = "gphistplot"))
                                                                                ),
                                                                                shiny::column(6,
                                                                                              bslib::card(
                                                                                                full_screen = TRUE, height = 450,
                                                                                                bslib::card_header("SNP data"),
-                                                                                                         DT::DTOutput(outputId = "gpsnpdata"))
+                                                                                               DT::DTOutput(outputId = "gpsnpdata"))
                                                                                )
-                                                               ),#End of shiny::fluidRow GS CV outputs
+                                                               ),#End of Data quality control
                                                                shiny::fluidRow(class = "height: 35vh; overflow-y: auto;",#GS CV outputs
                                                                                shiny::column(6,
                                                                                              bslib::card(
                                                                                                full_screen = TRUE, height = 450,
                                                                                                bslib::card_header("Cross-validation Scatter plot"),
-                                                                                                         shiny::plotOutput(outputId = "gpscatterplot"))
+                                                                                               shiny::plotOutput(outputId = "gpscatterplot"))
                                                                                ),
                                                                                shiny::column(6,
                                                                                              bslib::card(full_screen = TRUE, height = 450,
                                                                                                          bslib::card_header("Cross-validation Violin plot"),
                                                                                                          shiny::plotOutput(outputId = "gpviolin"))
                                                                                )
-                                                               ),#End of shiny::fluidRow GS CV outputs
+                                                               ),#End of fluidRow GS CV outputs
 
                                                                # shiny::fluidRow(class = "height: 10vh",#GS outputs control
                                                                #                 shiny::column(6,
@@ -397,7 +416,7 @@ run_visage <- function() {
                                                                                                                                  DT::DTOutput(outputId = "summary_pred1"))
                                                                                                        )
 
-                                                                                                ),
+                                                                               ),
                                                                                shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data' & input.gpchoice == 'Yes'",
                                                                                                        shiny::column(6,
                                                                                                                      bslib::card(
@@ -450,7 +469,7 @@ run_visage <- function() {
       shiny::withProgress(message = "Creating founders ...", value = 0, {
         new_f <- create_founders(nfounders = input$numFounder, nChrom = input$numChr, nSites = input$totalSeg)
         founders(new_f)
-        })
+      })
     })
 
     simparms <- shiny::eventReactive(founders(),{
@@ -894,7 +913,8 @@ run_visage <- function() {
       print(var_plot())
     })
     #### End of server for Selection ++++++++++++++++++++++++++####
-    #### Server for GWAS ++++++++++++++++++++++++++####
+
+    #### Beginning server for GWAS ++++++++++++++++++++++++++####
     ## Select the trait
     output$gwasseltype <- shiny::renderUI({
       shiny::req(input$selType)
@@ -903,9 +923,123 @@ run_visage <- function() {
 
     output$gwasgeneration <- shiny::renderUI({
       shiny::req(input$NumGener)
-      shiny::selectInput("gwasgener", label = "Select the generation",
+      shiny::selectInput("gwasgeneration", label = "Select the generation",
                          choices = c(0:input$NumGener))
     })
+
+    ## Read in snp data
+    gwas_snp <- shiny::reactive({
+      if(input$gwasdtchoice == "Using simulated data"){
+        shiny::req(input$gwaseltype, input$gwasgeneration, gen_simulation())
+        (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gwasgeneration),
+                     sel_type = input$gwaseltype, SP_object = simparms()))$snp_data
+      }else if(input$gwasdtchoice == "Using my own data"){
+        shiny::req(input$genodtgwas)
+        file <- input$genodtgwas
+        if(is.null(file)){return(NULL)}
+        ext <- tools::file_ext(file$name)
+        switch(ext,
+               "csv" = utils::read.csv(file$datapath, header = TRUE),
+               "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
+               NULL)
+      }
+    })
+
+    gwas_map <- shiny::reactive({
+      if(input$gwasdtchoice == "Using simulated data"){
+        shiny::req(simparms())
+        AlphaSimR::getGenMap(object = simparms())
+      }else if(input$gwasdtchoice == "Using my own data"){
+        # shiny::req(input$genomapgwas)
+        file <- input$genomapgwas
+        if(is.null(file)){return(NULL)}
+        ext <- tools::file_ext(file$name)
+        switch(ext,
+               "csv" = utils::read.csv(file$datapath, header = TRUE),
+               "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
+               NULL)
+      }
+
+    })
+
+    gwas_pheno <- shiny::reactive({
+      if(input$gwasdtchoice == "Using simulated data"){
+        shiny::req(input$gwaseltype, input$gwasgeneration, gen_simulation())
+        (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gwasgeneration),
+                     sel_type = input$gwaseltype, SP_object = simparms()))$pheno_data
+        # shiny::req(gp_sim_dt())
+        # gp_sim_dt()$pheno_data
+      }else if(input$gwasdtchoice == "Using my own data"){
+        # shiny::req(input$phenodtgwas)
+        file <- input$phenodtgwas
+        if(is.null(file)){return(NULL)}
+
+        ext <- tools::file_ext(file$name)
+        switch (object,
+                "csv" = utils::read.csv(file$datapath, header = TRUE),
+                "txt" = utils::read.table(file$datapath, header = T, sep = "\t"),
+                NULL)
+      }
+
+    })
+
+    ##### preview of data sets for GWAS ####### ------------
+    output$gwaschoosetrait <- shiny::renderUI({
+      shiny::req(gwas_pheno())
+      trait_choices <- names(gwas_pheno())[-1]
+      shiny::selectInput("gwaschoosetrait", label = "Select a trait", choices = trait_choices)
+    })
+
+    output$gwassnpdata <- DT::renderDT({
+      shiny::req(gwas_snp())
+      if(nrow(gwas_snp()) > 50){
+        gwas_snp()[1:50, 1:10]
+      }else{
+        gwas_snp()[, 1:10]
+      }
+
+    })
+
+    output$gwashistplot<- shiny::renderPlot({
+      shiny::req(gwas_pheno())
+      graphics::hist(gwas_pheno()[[input$gwaschoosetrait]], main = "",
+                     xlab = input$gwaschoosetrait, col = "#0455A4", border = "white")
+    })
+
+    ###### Perform GWAS analysis ================
+    gwas_out <- shiny::eventReactive(input$rungwas,{
+      shiny::withProgress(message = "GWAS analysis is running ...", value = 0, {
+        GAPIT(Y = gwas_pheno(),
+              GD = gwas_snp(),
+              GM = gwas_map(),
+              # G = ,
+              Model.selection = FALSE,
+              file.output = FALSE)
+      })
+
+    })
+
+    #### Visualization of GWAS results
+    output$gwasresultdt <- DT::renderDT({
+      shiny::req(gwas_out())
+      if(nrow(gwas_out()$GWAS) > 50){
+        gwas_out()$GWAS[1:50,]
+      }else{
+        gwas_out()$GWAS
+      }
+
+    })
+
+    gwas_formatted <- reactive({
+      shiny::req(gwas_out())
+      format_gapit_results(data = as.data.frame(gwas_out()$GWAS), package = "qqman")
+    })
+
+    output$manhathanplot <- shiny::renderPlot({
+      shiny::req(gwas_formatted())
+      qqman::manhattan(x= gwas_formatted(), col = c("#0455A4", "#FF5F05"))
+    })
+
 
     #### End of server for GWAS ++++++++++++++++++++++++++####
 
@@ -932,7 +1066,7 @@ run_visage <- function() {
       if(input$gpdtchoice == "Using simulated data"){
         shiny::req(input$gpseltype, input$gpgeneration, gen_simulation())
         (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
-                    sel_type = input$gpseltype, SP_object = simparms()))$snp_data
+                     sel_type = input$gpseltype, SP_object = simparms()))$snp_data
         # shiny::req(gp_sim_dt())
         # gp_sim_dt()$snp_data
       }else if(input$gpdtchoice == "Using my own data"){
@@ -944,7 +1078,7 @@ run_visage <- function() {
       if(input$gpdtchoice == "Using simulated data"){
         shiny::req(input$gpseltype, input$gpgeneration, gen_simulation())
         (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
-                    sel_type = input$gpseltype, SP_object = simparms()))$pheno_data
+                     sel_type = input$gpseltype, SP_object = simparms()))$pheno_data
         # shiny::req(gp_sim_dt())
         # gp_sim_dt()$pheno_data
       }else if(input$gpdtchoice == "Using my own data"){
@@ -973,12 +1107,12 @@ run_visage <- function() {
     output$gphistplot<- shiny::renderPlot({
       shiny::req(tpheno_reactive())
       graphics::hist(tpheno_reactive()[[input$choosetraitgp]], main = "",
-           xlab = input$choosetraitgp, col = "#0455A4", border = "white")
+                     xlab = input$choosetraitgp, col = "#0455A4", border = "white")
     })
 
     ## Run cross-validation
     cv_results <- shiny::eventReactive(input$runcv,{
-      print("Button runcv clicked")
+      # print("Button runcv clicked")
       shiny::req(tgeno_reactive(), tpheno_reactive(), input$choosetraitgp, input$numfolds, input$numreps)
       shiny::withProgress(message = "Cross-validation in progress ...", value = 0, {
         genomic_prediction_rrblup(snp_data = tgeno_reactive(),
@@ -1069,9 +1203,9 @@ run_visage <- function() {
         shiny::req(input$gpseltype2, input$gpgeneration2, gen_simulation())
         (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration2),
                      sel_type = input$gpseltype2, SP_object = simparms()))$pheno_data
-        }else{
-          NULL
-        }
+      }else{
+        NULL
+      }
 
     })
 
@@ -1092,12 +1226,12 @@ run_visage <- function() {
 
     #### genomic prediction quantile coincidence
     coin_plt <- shiny::eventReactive(list(pred(),input$selectpct, testpheno_reactive()),{
-        shiny::req(pred(), input$selectpct, testpheno_reactive())
-        data = as.data.frame(cbind(pred()$genetic_merit, testpheno_reactive()[,2]))
-        gp_coincidence_plot(df = data, var1 = colnames(data)[1],
-                            var2 = colnames(data)[2],
-                            q1 = 0.01*(input$selectpct))
-        })#End of coin_plt
+      shiny::req(pred(), input$selectpct, testpheno_reactive())
+      data = as.data.frame(cbind(pred()$genetic_merit, testpheno_reactive()[,2]))
+      gp_coincidence_plot(df = data, var1 = colnames(data)[1],
+                          var2 = colnames(data)[2],
+                          q1 = 0.01*(input$selectpct))
+    })#End of coin_plt
 
     output$gp_accuracy1 <- shiny::renderPlot({
       print(coin_plt())

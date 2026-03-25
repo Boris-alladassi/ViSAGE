@@ -302,7 +302,7 @@ genetic_gain <- function(dt, fill_factor1, fill_factor2, y_variable, trait_name 
   y_label <- ifelse(y_variable == "genetic_value", "Genetic value",
                     ifelse(y_variable == "breeding_value", "Breeding value", "Phenotype"))
   custom_theme <- ggplot2::theme_bw() +
-    ggplot2::theme(axis.text = ggplot2::element_text(color = "black", size = 12),
+    ggplot2::theme(axis.text = ggplot2::element_text(color = "black", size = 12, angle = 45),
                    axis.title = ggplot2::element_text(colour = "black", face = "bold", size = 13),
                    panel.grid = ggplot2::element_blank(),
                    panel.border = ggplot2::element_rect(linewidth = 1.2, color = "black"),
@@ -372,7 +372,7 @@ computeVariancePlot <- function(gen_list, SP_object) {
 
   # 3. Create stacked barplot
   custom_theme <- ggplot2::theme_bw() +
-    ggplot2::theme(axis.text = ggplot2::element_text(color = "black", size = 12),
+    ggplot2::theme(axis.text = ggplot2::element_text(color = "black", size = 12, angle = 45),
                    axis.title = ggplot2::element_text(colour = "black", face = "bold", size = 13),
                    panel.grid = ggplot2::element_blank(),
                    panel.border = ggplot2::element_rect(linewidth = 1.2, color = "black"),

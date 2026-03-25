@@ -278,6 +278,7 @@ sim_data_gp <- function(mega_list, generation, sel_type, SP_object){
   genomic_data <- AlphaSimR::pullSegSiteGeno(obj_list, simParam = SP) |>
     as.data.frame() |>
     tibble::rownames_to_column(var = "ID") |> as.data.frame()
+  genomic_map <- AlphaSimR::getGenMap(object = SP)
   pheno_data <- as.data.frame(AlphaSimR::pheno(obj_list))
   colnames(pheno_data) <- "Trait1"
   pheno_data <- data.frame(ID = genomic_data$ID, pheno_data)
@@ -286,6 +287,7 @@ sim_data_gp <- function(mega_list, generation, sel_type, SP_object){
   }
   gp_dt <- list(
     snp_data = genomic_data,
+    geno_map = genomic_map,
     pheno_data = pheno_data
   )
   return(gp_dt)
@@ -425,15 +427,22 @@ gp_coincidence_plot <- function(df, var1, var2, q1 = 0.9) {
     dplyr::mutate(coincidence = ifelse((.data[[var1]] > qx & .data[[var2]] > qy) | #OR
                                          (.data[[var1]] < qx & .data[[var2]] < qy),
                                        "highlight","normal"))
+  common <- length(which(df$coincidence == "highlight"))
+  random <- ceiling(q1 * common)
+  total <- ceiling(q1 * length(df$coincidence))
+  coincidence_index <- round((common - random)/(total - random), 2)
   # build plot
   p <- ggplot2::ggplot(df, ggplot2::aes(x = .data[[var1]], y = .data[[var2]])) +
     ggplot2::geom_point(ggplot2::aes(color = coincidence, size = coincidence)) +
     ggplot2::scale_color_manual(values = c("highlight" = "#FF5F05", "normal" = "grey40")) +
     ggplot2::scale_size_manual(values = c("highlight" = 3, "normal" = 1.5)) +
-    # ggplot2::scale_y_continuous(limits = c(mini, maxi)) +
-    # ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
+    ggplot2::scale_y_continuous(limits = c(mini, maxi)) +
+    ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
     ggplot2::geom_smooth(method = "lm", se = FALSE, color = NA) +
     ggpubr::stat_regline_equation() +
+    ggplot2::annotate("text", x = mini + 0.1*(maxi - mini),
+                      y = mini + 0.8*(maxi - mini),
+                      label = paste0("Coincidence index = ", coincidence_index)) +
     ggplot2::geom_vline(xintercept = qx, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = qy, linetype = "dashed") +
     ggplot2::labs(x = "Predicted genetic merit", y = "Observed phenotype") +
