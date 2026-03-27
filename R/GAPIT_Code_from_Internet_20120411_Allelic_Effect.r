@@ -11,7 +11,7 @@ GAPIT <- function(Y=NULL,G=NULL,GD=NULL,GM=NULL,KI=NULL,Z=NULL,CV=NULL,GP=NULL,G
                 LD.chromosome=NULL,LD.location=NULL,LD.range=NULL,
                 sangwich.top=NULL,sangwich.bottom=NULL,QC=TRUE,GTindex=NULL,LD=0.01,
                 file.output=TRUE,cutOff=0.01, Model.selection = FALSE,output.numerical = FALSE,output.hapmap = FALSE){
-GAPIT.Version="2.13 (Output genotype onverted or extracted)"
+GAPIT.Version="2.13 (Output genotype converted or extracted)"
 #Object: To perform GWAS and GPS (Genomic Prediction/Selection)
 #Designed by Zhiwu Zhang
 #Writen by Alex Lipka, Feng Tian and Zhiwu Zhang
@@ -116,10 +116,10 @@ if(ncol(Y)==2) {
 h2= as.matrix(as.numeric(as.vector(gapitMain$Compression[,5]))/(as.numeric(as.vector(gapitMain$Compression[,5]))+as.numeric(as.vector(gapitMain$Compression[,6]))),length(gapitMain$Compression[,6]),1)
 colnames(h2)=c("Heritability")
   print("GAPIT accomplished successfully for single trait. Results are saved. GWAS and GPS are returned!")
-  return (list(GWAS=gapitMain$GWAS,GPS=gapitMain$GPS,compression=as.data.frame(cbind(gapitMain$Compression,h2)), kinship.optimum=gapitMain$kinship.optimum,kinship=gapitMain$kinship,PCA=gapitMain$PC))
+  return(list(GWAS=gapitMain$GWAS,GPS=gapitMain$GPS,compression=as.data.frame(cbind(gapitMain$Compression,h2)), kinship.optimum=gapitMain$kinship.optimum,kinship=gapitMain$kinship,PCA=gapitMain$PC))
 }else{
   print("GAPIT accomplished successfully for multiple traits. Results are saved")
-  return (list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=gapitMain$KI,PCA=gapitMain$PC))
+  return(list(GWAS=NULL,GPS=NULL,compression=NULL,kinship.optimum=NULL,kinship=gapitMain$KI,PCA=gapitMain$PC))
 }
 
 }# end ofdetecting null Y
@@ -202,7 +202,7 @@ CV[,2]=1
 colnames(CV)=c("taxa","overall")
 }
 
-#Remove duplicat and integragation of data
+#Remove duplicate and integragation of data
 print("QC is in process...")
 
 if(QC)
@@ -277,7 +277,7 @@ if(is.null(CV) | (!is.null(CV)& group.to<ncol(CV))) {
 #The minimum of group is number of columns in CV
   group.from=1
   group.to=1
-  warning("The upper bound of groups (group.to) is not sufficient. both boundries were set to a and GLM is performed!")
+  warning("The upper bound of groups (group.to) is not sufficient. both boundries were set to 1 and GLM is performed!")
 }
 
 if(!is.null(CV)& group.from<1) {
@@ -331,7 +331,7 @@ if(min(X0[,1])!=max(X0[,1])) X0 <- cbind(1, X0) #do not add overall mean if X0 h
 Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="DataProcessing")
 Memory=GAPIT.Memory(Memory=Memory,Infor="DataProcessing")
 
-print("-------------------------Iterstion in process--------------------------")
+print("-------------------------Iteration in process--------------------------")
 print(paste("Total iterations: ",numSetting,sep=""))
 
 #Loop to optimize cluster algorithm, group number and kinship type
@@ -1059,7 +1059,9 @@ file=paste("GAPIT.", name.of.trait,".Memory.Stage.csv" ,sep = "")
 utils::write.table(Memory, file, quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
 }
 print(paste(name.of.trait, "has been analyzed successfully!") )
-print(paste("The results are saved in the directory of ", getwd()) )
+if(file.output){
+  print(paste("The results are saved in the directory of ", getwd()) )
+}
 print("==========================================================================================")
 
 return (list(Timmer=Timmer,Compression=Compression,kinship.optimum=theK.return, kinship=KI,PC=PC,GWAS=GWAS, GPS=GPS,REMLs=Compression[count,4],Timmer=Timmer,Memory=Memory))
@@ -1386,21 +1388,21 @@ if(!is.null(xs))  {
   m <- ncol(xs) #number of SNPs
   t <- nrow(xs) #number of individuals
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before cleaning")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
+# Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before cleaning")
+# Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
   #allocate spaces for SNPs
-  rm(dfs)
-  rm(stats)
-  rm(effect.est)
-  rm(ps)
-  rm(nobs)
-  rm(maf)
-  rm(rsquare_base)
-  rm(rsquare)
+  # rm(dfs)
+  # rm(stats)
+  # rm(effect.est)
+  # rm(ps)
+  # rm(nobs)
+  # rm(maf)
+  # rm(rsquare_base)
+  # rm(rsquare)
   gc()
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="After cleaning")
-Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
+# Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="After cleaning")
+# Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
 
   dfs <- matrix(nrow = m, ncol = g)
   stats <- matrix(nrow = m, ncol = g)
@@ -2744,40 +2746,45 @@ print("Setting p_value_quantiles...")
 p_value_quantiles <- (1:length(P.values))/(length(P.values)+1)
 
 
-if(plot.type == "log_P_values")
-{
-    log.P.values <- -log10(P.values)
-    log.Quantiles <- -log10(p_value_quantiles)
-
-    index=GAPIT.Pruning(log.P.values,DPP=DPP)
-    log.P.values=log.P.values[index ]
-    log.Quantiles=log.Quantiles[index]
-
-    grDevices::pdf(paste("GAPIT.", name.of.trait,".QQ-Plot.pdf" ,sep = ""))
-    graphics::par(mar = c(5,5,5,5))
-    stats::qqplot(log.Quantiles, log.P.values, xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)),
-           cex.axis=1.5, cex.lab=2, lty = 1, lwd = 1, col = "Blue" ,xlab =expression(Expected~~-log[10](italic(p))),
-           ylab = expression(Observed~~-log[10](italic(p))), main = paste(name.of.trait,sep=" "))
-    graphics::abline(a = 0, b = 1, col = "red")
-    grDevices::dev.off()
-}
+# if(plot.type == "log_P_values")
+# {
+#     log.P.values <- -log10(P.values)
+#     log.Quantiles <- -log10(p_value_quantiles)
+#
+#     index=GAPIT.Pruning(log.P.values,DPP=DPP)
+#     log.P.values=log.P.values[index ]
+#     log.Quantiles=log.Quantiles[index]
+#
+#     grDevices::pdf(paste("GAPIT.", name.of.trait,".QQ-Plot.pdf" ,sep = ""))
+#     graphics::par(mar = c(5,5,5,5))
+#     stats::qqplot(log.Quantiles, log.P.values, xlim = c(0,max(log.Quantiles)), ylim = c(0,max(log.P.values)),
+#            cex.axis=1.5, cex.lab=2, lty = 1, lwd = 1, col = "Blue" ,xlab =expression(Expected~~-log[10](italic(p))),
+#            ylab = expression(Observed~~-log[10](italic(p))), main = paste(name.of.trait,sep=" "))
+#     graphics::abline(a = 0, b = 1, col = "red")
+#     grDevices::dev.off()
+# }
 
 
 if(plot.type == "P_values")
 {
-  grDevices::pdf(paste("QQ-Plot_", name.of.trait,".pdf" ,sep = ""))
-  graphics::par(mar = c(5,5,5,5))
-  stats::qqplot(p_value_quantiles, P.values, xlim = c(0,1),
-         ylim = c(0,1), type = "l" , xlab = "Uniform[0,1] Theoretical Quantiles",
-         lty = 1, lwd = 1, ylab = "Quantiles of P-values from GWAS", col = "Blue",
-         main = paste(name.of.trait,sep=" "))
+  # grDevices::jpeg(paste0("QQ-Plot_", name.of.trait,".jpg"))
+  # graphics::par(mar = c(5,5,5,5))
+  # stats::qqplot(p_value_quantiles, P.values, xlim = c(0,1),
+  #        ylim = c(0,1), type = "l" , xlab = "Uniform[0,1] Theoretical Quantiles",
+  #        lty = 1, lwd = 1, ylab = "Quantiles of P-values from GWAS", col = "Blue",
+  #        # main = paste(name.of.trait,sep=" "),
+  #        main = "")
+  # graphics::abline(a = 0, b = 1, col = "red")
+  # grDevices::dev.off()
+
+  qqp <- stats::qqplot(p_value_quantiles, P.values, xlim = c(0,1),
+                       ylim = c(0,1), type = "l" , xlab = "Uniform[0,1] Theoretical Quantiles",
+                       lty = 1, lwd = 1, ylab = "Quantiles of P-values from GWAS", col = "Blue",
+                       # main = paste(name.of.trait,sep=" "),
+                       main = "")
   graphics::abline(a = 0, b = 1, col = "red")
-  grDevices::dev.off()
 }
-
-
-  #print("GAPIT.QQ  accomplished successfully!")
-
+return(qqp)
 
 }
 

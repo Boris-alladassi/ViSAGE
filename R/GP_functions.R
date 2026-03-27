@@ -221,7 +221,7 @@ plot_prediction <- function(cross_vd_dt){
                          linetype = "dashed", color = "blue") +
     ggplot2::annotate("text", x = mini, y = maxi,
                       label = label_text, hjust = 0, vjust = 1, size = 4) +
-    ggplot2::geom_smooth(se = FALSE, color = NA)+
+    ggplot2::geom_smooth(method = "lm", se = FALSE, color = NA)+
     ggpubr::stat_regline_equation(label.y.npc = 0.8)+
     ggplot2::labs(y = "Observed phenotype", x = "Predicted phenotype") +
     ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
@@ -421,15 +421,19 @@ gp_coincidence_plot <- function(df, var1, var2, q1 = 0.9) {
   # compute quantiles
   qx <- stats::quantile(df[[var1]], q1, na.rm = TRUE)
   qy <- stats::quantile(df[[var2]], q1, na.rm = TRUE)
-
+  rho <- stats::cor.test(df[[var1]], df[[var2]])
   # flag points
   df <- df |>
     dplyr::mutate(coincidence = ifelse((.data[[var1]] > qx & .data[[var2]] > qy) | #OR
                                          (.data[[var1]] < qx & .data[[var2]] < qy),
-                                       "highlight","normal"))
-  common <- length(which(df$coincidence == "highlight"))
+                                       "highlight","normal"),
+                  common = ifelse((.data[[var1]] > qx & .data[[var2]] > qy),
+                                       "selected","notselected")
+                  )
+
+  common <- length(which(df$common == "selected"))
   random <- ceiling(q1 * common)
-  total <- ceiling(q1 * length(df$coincidence))
+  total <- length(which(df[[var1]] > qx))
   coincidence_index <- round((common - random)/(total - random), 2)
   # build plot
   p <- ggplot2::ggplot(df, ggplot2::aes(x = .data[[var1]], y = .data[[var2]])) +
@@ -439,14 +443,18 @@ gp_coincidence_plot <- function(df, var1, var2, q1 = 0.9) {
     ggplot2::scale_y_continuous(limits = c(mini, maxi)) +
     ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
     ggplot2::geom_smooth(method = "lm", se = FALSE, color = NA) +
-    ggpubr::stat_regline_equation() +
-    ggplot2::annotate("text", x = mini + 0.1*(maxi - mini),
-                      y = mini + 0.8*(maxi - mini),
-                      label = paste0("Coincidence index = ", coincidence_index)) +
+    ggpubr::stat_regline_equation(size = 5) +
+    ggplot2::annotate("text", x = mini + 0.15*(maxi - mini),
+                      y = mini + 0.85*(maxi - mini), size = 5,
+                      label = paste0("CI = ", coincidence_index)) +
+    ggplot2::annotate("text", x = mini + 0.15*(maxi - mini),
+                      y = mini + 0.75*(maxi - mini), size = 5,
+                      label = paste0("r = ", round(rho$estimate, 2),
+                                     "\np = ", round(rho$p.value, 4)))+
     ggplot2::geom_vline(xintercept = qx, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = qy, linetype = "dashed") +
     ggplot2::labs(x = "Predicted genetic merit", y = "Observed phenotype") +
-    ggplot2::theme(legend.position = "none")+
+    ggplot2::theme(legend.position = "none") +
     boris_theme()
 
   return(p)

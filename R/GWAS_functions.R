@@ -74,12 +74,11 @@ format_gapit_results <- function(data, package) {
   data <- stats::na.omit(data)
 
   return(data)
-}
-
-### Use function qqman::manhattan() for plotting
+} ### Use function qqman::manhattan() for plotting
 
 
-###
+### The function below was obtained from:
+### https://github.com/cran/multtest/tree/master/R
 mt.rawp2adjp<-function(rawp,proc=c("Bonferroni","Holm","Hochberg","SidakSS","SidakSD","BH","BY","ABH",
                                    "TSBH"), alpha=0.05, na.rm=FALSE)
 {
@@ -213,3 +212,18 @@ mt.rawp2adjp<-function(rawp,proc=c("Bonferroni","Holm","Hochberg","SidakSS","Sid
 }
 
 ###########################################################################
+### A function for selection of GLM or MLM in classical GAPIT code
+model_selection <- function(data, model = "GLM"){
+  sample_size = nrow(data)
+  grp_from = 1
+  grp_to = 1
+  grp_by = 1
+
+  if(model == "MLM"){
+    grp_from = sample_size
+    grp_to = sample_size
+    grp_by = 1
+  }
+  out <- list(grp_from = grp_from, grp_to = grp_to, grp_by = grp_by)
+  return(out)
+}

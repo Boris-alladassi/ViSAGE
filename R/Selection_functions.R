@@ -302,7 +302,8 @@ genetic_gain <- function(dt, fill_factor1, fill_factor2, y_variable, trait_name 
   y_label <- ifelse(y_variable == "genetic_value", "Genetic value",
                     ifelse(y_variable == "breeding_value", "Breeding value", "Phenotype"))
   custom_theme <- ggplot2::theme_bw() +
-    ggplot2::theme(axis.text = ggplot2::element_text(color = "black", size = 12, angle = 45),
+    ggplot2::theme(axis.text.x = ggplot2::element_text(color = "black", size = 12, angle = 45),
+                   axis.text.y = ggplot2::element_text(color = "black", size = 12),
                    axis.title = ggplot2::element_text(colour = "black", face = "bold", size = 13),
                    panel.grid = ggplot2::element_blank(),
                    panel.border = ggplot2::element_rect(linewidth = 1.2, color = "black"),
@@ -339,6 +340,15 @@ genetic_gain <- function(dt, fill_factor1, fill_factor2, y_variable, trait_name 
 }
 
 
+#' Compute and plot variance components across generations
+#'
+#' @param gen_list
+#' @param SP_object
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 computeVariancePlot <- function(gen_list, SP_object) {
   # if(length(gen_list) == 0) {
   #   stop("gen_list is empty. Please provide a list of population objects from AlphaSimR.")
@@ -373,6 +383,162 @@ computeVariancePlot <- function(gen_list, SP_object) {
   # 3. Create stacked barplot
   custom_theme <- ggplot2::theme_bw() +
     ggplot2::theme(axis.text = ggplot2::element_text(color = "black", size = 12, angle = 45),
+                   axis.title = ggplot2::element_text(colour = "black", face = "bold", size = 13),
+                   panel.grid = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(linewidth = 1.2, color = "black"),
+                   axis.ticks = ggplot2::element_line(linewidth = 1, colour = "black"),
+                   legend.text = ggplot2::element_text(colour = "black", size = 12),
+                   text = ggplot2::element_text(colour = "black", size = 12))
+  fill_col <- c("Additive" = "#1b9e77", "Dominance" = "#d95f02",
+                "AA_Epistasis" = "#7570b3")
+
+  p <- ggplot2::ggplot(
+    variance_long,
+    ggplot2::aes(
+      x = base::factor(.data$generation),
+      y = .data$proportion,
+      fill = .data$component
+    )
+  ) +
+    ggplot2::geom_bar(stat = "identity") +
+    ggplot2::labs(x = "Generation", y = "Prop. of Variance",
+                  title = " ") +
+    ggplot2::scale_fill_manual(
+      values = fill_col) +
+    custom_theme
+
+  # # Return both data and plot
+  # list(
+  #   data = variance_long,
+  #   plot = p
+  # )
+
+  return(p)
+}
+
+computeVariancePlot_SP <- function(gen_list, SP_object) {
+  # if(length(gen_list) == 0) {
+  #   stop("gen_list is empty. Please provide a list of population objects from AlphaSimR.")
+  # }
+  # 1. Create list of merged geno and pheno dts
+  compute_variances <- function(pop, SP_object) {
+
+    geno_dt <- AlphaSimR::pullQtlGeno(pop, trait = 1, simParam = SP_object)
+    pheno_dt <- as.data.frame(AlphaSimR::gv(pop))
+    geno_df <- data.frame(ID = paste0("id",1:nrow(geno_dt)), geno_dt)
+    pheno_df <- data.frame(ID = paste0("id",1:nrow(geno_dt)), pheno_dt)
+    trait <- colnames(pheno_df)[2]
+
+    # -------------------------
+    # Input validation
+    # -------------------------
+    if (!"ID" %in% colnames(geno_df)) {
+      stop("geno_df must contain an 'ID' column.")
+    }
+
+    if (!"ID" %in% colnames(pheno_df)) {
+      stop("pheno_df must contain an 'ID' column.")
+    }
+
+    if (ncol(pheno_df) < 2) {
+      stop("pheno_df must contain at least one trait column.")
+    }
+
+    # -------------------------
+    # Merge data
+    # -------------------------
+    merged_df <- dplyr::inner_join(geno_df, pheno_df, by = "ID")
+
+    trait_name <- colnames(pheno_df)[2]
+    markers <- colnames(geno_df)[-1]
+    nloci = ncol(geno_df)-1
+    nindiv = nrow(geno_df)
+
+    # -------------------------
+    # Convert to long format
+    # -------------------------
+    long_df <- tidyr::pivot_longer(
+      data = merged_df,
+      cols = dplyr::all_of(markers),
+      names_to = "SNP",
+      values_to = "Dosage"
+    )
+
+    # -------------------------
+    # Genotype means and counts
+    # -------------------------
+    genotype_stats <- dplyr::group_by(long_df, SNP, Dosage) |>
+      dplyr::summarise(
+        mean_trait = mean(.data[[trait_name]], na.rm = TRUE),
+        n = dplyr::n(),
+        .groups = "drop"
+      )
+
+    # -------------------------
+    # Allele frequency
+    # -------------------------
+    allele_freq <- tidyr::pivot_wider(
+      dplyr::select(genotype_stats, -mean_trait),
+      names_from = Dosage,
+      values_from = n, names_prefix = "freq_") |>
+      dplyr::mutate(p = (2*freq_0 + freq_1)/(2*nindiv),
+                    q = 1-p)
+
+    # -------------------------
+    # Gene action effect: a & d
+    # -------------------------
+    a_d_effect <- tidyr::pivot_wider(
+      dplyr::select(genotype_stats, -n),
+      names_from = Dosage,
+      values_from = mean_trait,
+      names_prefix = "mu_") |>
+      dplyr::mutate(a = (mu_0 - mu_2)/2,
+                    d = mu_1 - (mu_0 + mu_2)/2)
+
+    # -------------------------
+    # Compute genetic effects
+    # -------------------------
+    eff_and_var <- dplyr::full_join(a_d_effect, allele_freq) |>
+      dplyr::mutate(
+        # Average effect of allele substitution
+        alpha = a + d * (q - p),
+
+        # Variance components
+        additive_variance = 2 * p * q * (alpha^2),
+        dominance_variance = (2 * p * q * d)^2)
+
+    varAdd <- sum(eff_and_var$additive_variance)
+    vardom <- sum(eff_and_var$dominance_variance)
+    vargen <- var(pheno_df[[trait]])
+    varepi <- vargen - (varAdd + vardom)
+    # list(eff_and_var = eff_and_var, vargen = vargen,
+    #      varAdd = varAdd, vardom = vardom, varepi = varepi)
+    df = data.frame(Additive = varAdd, Dominance = vardom,
+                    AA_Epistasis = varepi, Genetic = vargen)
+    return(df)
+  }
+
+  # 1. Extract variance components for each generation
+  variance_df <- base::lapply(gen_list, compute_variances, SP_object = SP_object) |>
+    data.table::rbindlist() |>
+    dplyr::mutate(generation = 0:(length(gen_list)-1)) |>
+    as.data.frame()
+
+  # 2. Convert to long format and compute proportions
+  variance_long <- variance_df |>
+    tidyr::pivot_longer(
+      cols = c("Additive", "Dominance", "AA_Epistasis"),
+      names_to = "component",
+      values_to = "value"
+    ) |>
+    dplyr::group_by(.data$generation) |>
+    dplyr::mutate(proportion = .data$value / sum(.data$value)) |>
+    as.data.frame()
+
+  # 3. Create stacked barplot
+  custom_theme <- ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(color = "black", size = 12, angle = 45),
+                   axis.text.y =  ggplot2::element_text(color = "black", size = 12),
                    axis.title = ggplot2::element_text(colour = "black", face = "bold", size = 13),
                    panel.grid = ggplot2::element_blank(),
                    panel.border = ggplot2::element_rect(linewidth = 1.2, color = "black"),

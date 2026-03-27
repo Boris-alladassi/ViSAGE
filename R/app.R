@@ -239,7 +239,7 @@ run_visage <- function() {
                                                                            ), #End of conditional panel for using own data
                                                                            shiny::uiOutput("gwaschoosetrait", label = "Select the trait shiny::column"),
                                                                            shiny::selectInput("gwasmodel", label = "Select one GWAS model", choices = c("GLM", "MLM")),
-                                                                           shiny::numericInput("numpcs", "Enter number of PCs", value = 3, min = 1),
+                                                                           shiny::numericInput("numpcs", "Enter number of PCA axes", value = 3, min = 1),
                                                                            shiny::actionButton(inputId = "rungwas", "Run GWAS", class = "btn btn-success")),
                                                                bslib::card(class = "height: 5vh",
                                                                            shiny::actionButton(inputId = "reset", "Reset the app", class = "btn btn-warning")),
@@ -671,8 +671,8 @@ run_visage <- function() {
     ## Run multi-geration simulation based on user-defined parameters and the click of the simulate button
     gen_simulation <- shiny::eventReactive(input$multisimulate, {
       shiny::req(base_pop(), input$multichoosetrait2, input$selType, input$intensity, input$NumGener)
-      dh <- list(); dl <- list(); dr <- list(); st <- list(); rd <- list(); bp <- base_pop()
-      SP <- simparms();
+      dh <- list(); dl <- list(); dr <- list(); st <- list(); rd <- list();
+      bp <- base_pop(); SP <- simparms();
       shiny::withProgress(message = "Selection simulation in progress ...", value = 0, {
         if("Directional_higher" %in% input$selType){
           if(input$basepopchoice == "Using variances"){
@@ -900,7 +900,11 @@ run_visage <- function() {
       indices <- which(sapply(sims, length) != 0)
       # computeVariancePlot(gen_simulation()[[indices[1]]])
 
-      plts <- lapply(sims[indices], computeVariancePlot, SP_object = simparms())
+     if(input$basepopchoice == "Using variances"){
+        plts <- lapply(sims[indices], computeVariancePlot, SP_object = simparms())
+      }else if(input$basepopchoice == "Using effect sizes"){
+        plts <- lapply(sims[indices], computeVariancePlot_SP, SP_object = simparms())
+      }
       ggpubr::ggarrange(plotlist = plts,
                         ncol = ifelse(length(plts) < 3, 1, 2),
                         nrow = ifelse(length(plts) < 4, 2, 3),
@@ -1001,43 +1005,73 @@ run_visage <- function() {
     })
 
     output$gwashistplot<- shiny::renderPlot({
-      shiny::req(gwas_pheno())
+      shiny::req(gwas_pheno(), input$gwaschoosetrait)
       graphics::hist(gwas_pheno()[[input$gwaschoosetrait]], main = "",
                      xlab = input$gwaschoosetrait, col = "#0455A4", border = "white")
     })
 
+    gwas_model <- shiny::reactive({
+      shiny::req(gwas_pheno(), input$gwasmodel)
+      model_selection(data = gwas_pheno(), model = input$gwasmodel)
+    })
+
+
     ###### Perform GWAS analysis ================
     gwas_out <- shiny::eventReactive(input$rungwas,{
+      shiny::req(gwas_pheno(), gwas_model())
+      model_inputs <- gwas_model()
       shiny::withProgress(message = "GWAS analysis is running ...", value = 0, {
         GAPIT(Y = gwas_pheno(),
               GD = gwas_snp(),
               GM = gwas_map(),
               # G = ,
+              group.from = model_inputs$grp_from,
+              group.to = model_inputs$grp_to,
+              group.by = model_inputs$grp_by,
+              PCA.total = input$numpcs,
               Model.selection = FALSE,
               file.output = FALSE)
       })
 
     })
 
-    #### Visualization of GWAS results
+    #### Visualization of GWAS results as data frame
     output$gwasresultdt <- DT::renderDT({
       shiny::req(gwas_out())
       if(nrow(gwas_out()$GWAS) > 50){
-        gwas_out()$GWAS[1:50,]
-      }else{
-        gwas_out()$GWAS
+        gwas_out()$GWAS[1:50,] |>
+          dplyr::mutate(dplyr::across(
+            dplyr::where(is.numeric) & !dplyr::any_of(c("Chromosome")),
+            ~ round(.x, 4)
+          ))
+        }else{
+        gwas_out()$GWAS |> as.data.frame() |>
+            dplyr::mutate(dplyr::across(
+              dplyr::where(is.numeric) & !dplyr::any_of(c("Chromosome")),
+              ~ round(.x, 4)
+            ))
       }
 
     })
 
+    #### Format output for Manhattan plot using qqman
     gwas_formatted <- reactive({
       shiny::req(gwas_out())
       format_gapit_results(data = as.data.frame(gwas_out()$GWAS), package = "qqman")
     })
 
     output$manhathanplot <- shiny::renderPlot({
-      shiny::req(gwas_formatted())
-      qqman::manhattan(x= gwas_formatted(), col = c("#0455A4", "#FF5F05"))
+      shiny::req(gwas_formatted(), base_pop())
+      qqman::manhattan(x= gwas_formatted(), #col = c("#0455A4", "#FF5F05"),
+                       highlight = unlist(base_pop()[[3]]))
+    })
+
+    ### Creating the Q-Q plot
+    output$qqplot <- shiny::renderPlot({
+      shiny::req(gwas_out())
+      # GAPIT.QQ(P.values = gwas_out()$GWAS[, 4], plot.type = "P_values",
+      #          name.of.trait = "Trait1")
+      qqman::qq(pvector = gwas_out()$GWAS[, 4])
     })
 
 
@@ -1104,8 +1138,9 @@ run_visage <- function() {
       }
 
     })
+
     output$gphistplot<- shiny::renderPlot({
-      shiny::req(tpheno_reactive())
+      shiny::req(tpheno_reactive(), input$choosetraitgp)
       graphics::hist(tpheno_reactive()[[input$choosetraitgp]], main = "",
                      xlab = input$choosetraitgp, col = "#0455A4", border = "white")
     })
