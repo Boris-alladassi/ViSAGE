@@ -52,7 +52,7 @@ run_visage <- function() {
                                                                                 choices = c("Using effect sizes", "Using variances"),selected = "Using effect sizes"),
                                                              shiny::conditionalPanel(condition = "input.basepopchoice == 'Using effect sizes'",
                                                                                      shiny::numericInput("tMean1_sp", "Population mean", value = 0, min = 0),
-                                                                                     shiny::numericInput("bsh1_sp", "Broad-sense heritability", value = 0, min = 0, max = 1),
+                                                                                     shiny::numericInput("bsh1_sp", "Broad-sense heritability (0–1)", value = 0, min = 0, max = 1),
                                                                                      shiny::numericInput("numadd", "Enter number of additive QTNs", value = 0, min = 0),
                                                                                      shiny::numericInput("numdom", "Enter number of dominance QTNs", value = 0, min = 0),
                                                                                      shiny::numericInput("numepi", "Enter number of pairwise additive x additive epistasis interactions", value = 0, min = 0),
@@ -65,7 +65,7 @@ run_visage <- function() {
                                                              ), #End of effect sizes conditional panel
                                                              shiny::conditionalPanel(condition = "input.basepopchoice == 'Using variances'",
                                                                                      shiny::numericInput("tMean1", "Population mean", value = 0),
-                                                                                     shiny::numericInput("bsh1", "Broad-sense heritability", value = 0, min = 0, max = 1),
+                                                                                     shiny::numericInput("bsh1", "Broad-sense heritability (0–1)", value = 0, min = 0, max = 1),
                                                                                      shiny::numericInput("totalNqtn1", "Number of QTNs", value = 0, min = 0),
                                                                                      shiny::numericInput("VA1", "Additive variance", value = 0, min = 0),
                                                                                      shiny::numericInput("VD1", "Dominance variance", value = 0, min = 0),
@@ -112,10 +112,10 @@ run_visage <- function() {
                                                                                            shiny::downloadButton("downloadPhenobp", "Download base population phenotypes")
                                                                              ),
                                                                              shiny::column(3,
-                                                                                           shiny::downloadButton("downloadheatf", "Download founders heatmap")
+                                                                                           shiny::downloadButton("downloadpcaf", "Download founders PCA biplot")
                                                                              ),
                                                                              shiny::column(3,
-                                                                                           shiny::downloadButton("downloadheatbp", "Download base population heatmap")
+                                                                                           shiny::downloadButton("downloadphenodist", "Download phenotypic distribution")
                                                                              )
                                                              ))#End of card and shiny::fluidRow
                                       )
@@ -157,43 +157,40 @@ run_visage <- function() {
                                                     shiny::div(class = "scroll-col", #class = "height: 90vh; overflow: auto;",
 
                                                                shiny::fluidRow(
-                                                                 shiny::column(12,
-                                                                               bslib::card(class = "height: 25vh; overflow-y: hidden;", bslib::card_header("Changes in phenotypic values"),
-                                                                                           shiny::plotOutput(outputId = "phenGainplot"))
-                                                                 )
+                                                                 bslib::card(class = "height: 25vh; overflow-y: hidden;",
+                                                                             bslib::card_header("Changes in phenotypic values"),
+                                                                             shiny::plotOutput(outputId = "phenGainplot"))
                                                                ),
                                                                shiny::fluidRow(
-                                                                 shiny::column(12,
-                                                                               bslib::card(class = "height: 25vh; overflow-y: hidden;", bslib::card_header("Changes in genetic values"),
-                                                                                           shiny::plotOutput(outputId = "genGainplot"))
+                                                                 bslib::card(class = "height: 25vh; overflow-y: hidden;",
+                                                                             bslib::card_header("Changes in genetic values"),
+                                                                             shiny::plotOutput(outputId = "genGainplot"))
+                                                               ),
+                                                               shiny::fluidRow(
+                                                                 bslib::card(class = "height: 25vh; overflow-y: hidden;",
+                                                                             bslib::card_header("Changes in genetic variance"),
+                                                                             shiny::plotOutput(outputId = "genvarplot")
                                                                  )
                                                                ),
-                                                               shiny::fluidRow(class = "height: 25vh; overflow-y: hidden;",
-                                                                               shiny::column(12, bslib::card(bslib::card_header("Changes in genetic variance"),
-                                                                                                             shiny::plotOutput(outputId = "genvarplot")
+                                                               shiny::fluidRow(class = "height: 10vh", #Download buttons
+                                                                               shiny::column(2.4,
+                                                                                             shiny::downloadButton("downloadmultigeno", "Download multi-generation genotypes")
+                                                                               ),
+                                                                               shiny::column(3,
+                                                                                             shiny::downloadButton("downloadmultipheno", "Download multi-generation phenotypes")
+                                                                               ),
+                                                                               shiny::column(3,
+                                                                                             shiny::downloadButton("downloadpvgainplot", "Download PV genetic gain plot")
+                                                                               ),
+                                                                               # shiny::column(3,
+                                                                               #               shiny::downloadButton("downloadgvgainplot", "Download Gv genetic gain plot")
+                                                                               # ),
+                                                                               shiny::column(3,
+                                                                                             shiny::downloadButton("downloadvarianceplot", "Download variance decomposition plot")
                                                                                )
-                                                                               )
-                                                                               # shiny::column(6,
-                                                                               #        bslib::card(bslib::card_header("Changes in allele frequencies"),
-                                                                               #             shiny::plotOutput(outputId = "allelefreqplot"))
-                                                                               # )
-                                                               ),
-
-                                                               bslib::card(bslib::card_header("Download results"),
-                                                                           shiny::fluidRow(class = "height: 10vh", #Download buttons
-                                                                                           shiny::column(4,
-                                                                                                         shiny::downloadButton("downloadMultigeno", "Download multi-generation genotypes")
-                                                                                           ),
-                                                                                           shiny::column(4,
-                                                                                                         shiny::downloadButton("downloadMultipheno", "Download multi-generation phenotypes")
-                                                                                           ),
-                                                                                           shiny::column(4,
-                                                                                                         shiny::downloadButton("downloadGainPlot", "Download genetic gain plot")
-                                                                                           )
-                                                                           )) # End of card and shiny::fluidRow download buttons
-
-                                                    )
-                                      )
+                                                               ) # End of card and shiny::fluidRow download buttons
+                                                               ) #End of Div
+                                      )# End of right column
                       )),
       ######################-------------------  End of SELECTION Panel--------------------################################
 
@@ -238,7 +235,7 @@ run_visage <- function() {
                                                                              shiny::selectInput("alltrait", label = "Analyze all the traits?", choices = c("No", "Yes"))
                                                                            ), #End of conditional panel for using own data
                                                                            shiny::uiOutput("gwaschoosetrait", label = "Select the trait shiny::column"),
-                                                                           shiny::selectInput("gwasmodel", label = "Select one GWAS model", choices = c("GLM", "MLM")),
+                                                                           shiny::selectInput("gwasmodel", label = "Select one GWAS model", choices = c("GLM", "MLM"), selected = "MLM"),
                                                                            shiny::numericInput("numpcs", "Enter number of PCA axes", value = 3, min = 1),
                                                                            shiny::actionButton(inputId = "rungwas", "Run GWAS", class = "btn btn-success")),
                                                                bslib::card(class = "height: 5vh",
@@ -292,10 +289,10 @@ run_visage <- function() {
                                                                                              shiny::downloadButton("downloadGWASresults", "Download GWAS results")
                                                                                ),
                                                                                shiny::column(4,
-                                                                                             shiny::downloadButton("downloadGWASP", "Download Manhattan plot")
+                                                                                             shiny::downloadButton("downloadGWASman", "Download Manhattan plot")
                                                                                ),
                                                                                shiny::column(4,
-                                                                                             shiny::downloadButton("downloadGWASQQ", "Download Q-Q plot")
+                                                                                             shiny::downloadButton("downloadGWASqq", "Download Q-Q plot")
                                                                                )
                                                                ) # End of shiny::fluidRow download buttons
 
@@ -435,11 +432,14 @@ run_visage <- function() {
 
                                                                shiny::fluidRow(class = "height: 10vh", #Download buttons
                                                                                shiny::column(3,
-                                                                                             shiny::downloadButton("downloadCVScatter", "Download GP scatterplot")
+                                                                                             shiny::downloadButton("downloadCVscatterplot", "Download CV scatterplot")
                                                                                ),
                                                                                shiny::column(3,
-                                                                                             shiny::downloadButton("downloadCVViolin", "Download CV violin plot")
+                                                                                             shiny::downloadButton("downloadGPciplot", "Download Coincidence plot")
                                                                                ),
+                                                                               # shiny::column(3,
+                                                                               #               shiny::downloadButton("downloadCVViolin", "Download CV violin plot")
+                                                                               # ),
                                                                                shiny::column(3,
                                                                                              shiny::downloadButton("downloadGPHist", "Download GP histogram")
                                                                                ),
@@ -597,6 +597,8 @@ run_visage <- function() {
     #
     # })
 
+    phenodist <- shiny::reactiveVal(NULL)
+
     output$histplotbp <- shiny::renderPlot({
       # shiny::req(histbp_reactive())
       # print(histbp_reactive())
@@ -604,10 +606,14 @@ run_visage <- function() {
       b_pop <- base_pop()[[2]]
       dt_trt <- as.data.frame(AlphaSimR::pheno(b_pop))
       colnames(dt_trt) <- "phenotype"
-      ggplot2::ggplot(data = dt_trt, ggplot2::aes(x = phenotype)) +
+      p <- ggplot2::ggplot(data = dt_trt, ggplot2::aes(x = phenotype)) +
         ggplot2::geom_histogram(color = "white", fill = "#FF5F0F", bins = 10) +
         ggplot2::labs(x = "Phenotypic values", y = "Number of individuals") +
         boris_theme()
+
+      phenodist(p)
+
+      p
     })
 
 
@@ -640,24 +646,25 @@ run_visage <- function() {
     )
 
     ## Download founders heatmap
-    output$downloadheatf <- shiny::downloadHandler(
+    output$downloadpcaf <- shiny::downloadHandler(
       filename = function(){
-        paste0("Founders_heatmap_", Sys.Date(), ".jpeg")
+        paste0("Founders_PCA_biplot_", Sys.Date(), ".jpeg")
       },
       content = function(file){
-        shiny::req(heatmapf())
-        ggplot2::ggsave(file, plot = heatmapf(), device = "jpeg", width = 6, height = 6, dpi = 300)
+        shiny::req(founders())
+        ggplot2::ggsave(file, plot = plot_pca_biplot(founders())
+                          , device = "jpeg", width = 5, height = 5, dpi = 300)
       }
     )
 
-    ## Download base population heatmap
-    output$downloadheatbp <- shiny::downloadHandler(
+    ## Download base population histogram
+    output$downloadphenodist <- shiny::downloadHandler(
       filename = function(){
-        paste0("Base_population_heatmap_", Sys.Date(), ".jpeg")
+        paste0("Base_pop_pheno_distribution_", Sys.Date(), ".jpeg")
       },
       content = function(file){
-        shiny::req(heatmapbp())
-        ggplot2::ggsave(file, plot = heatmapbp(), device = "jpeg", width = 6, height = 6, dpi = 300)
+        shiny::req(phenodist())
+        ggplot2::ggsave(file, plot = phenodist(), device = "jpeg", width = 5, height = 5, dpi = 300)
       }
     )
 
@@ -881,16 +888,24 @@ run_visage <- function() {
       mutated <- add_select_type(extracted, labels = options)
       data.table::rbindlist(mutated) |> as.data.frame()
     })
+
     ## create genetic gain plot
+    gvplt <- shiny::reactiveVal(NULL)
+    pvplt <- shiny::reactiveVal(NULL)
+
     output$phenGainplot <- shiny::renderPlot({
       shiny::req(gaindt_reactive())
-      genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+      p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
                    fill_factor2 = "Selection_type", y_variable = "phenotype")
+      pvplt(p) ## Save the plot p in reactive
+      p ## print the plot p
     })
     output$genGainplot <- shiny::renderPlot({
       shiny::req(gaindt_reactive())
-      genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+      p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
                    fill_factor2 = "Selection_type", y_variable = "genetic_value")
+      gvplt(p) ## Save the plot p in reactive
+      p ## print the plot p
     })
 
     var_plot <- shiny::eventReactive(gen_simulation(),{
@@ -914,8 +929,40 @@ run_visage <- function() {
     })
 
     output$genvarplot <- shiny::renderPlot({
-      print(var_plot())
+      var_plot()
     })
+
+    # Download PV genetic gain plot
+    output$downloadpvgainplot <- shiny::downloadHandler(
+      filename = function(){
+        paste0("Phenotypic_value_gain_plot", Sys.Date(), ".jpeg")
+      },
+      content = function(file){
+        shiny::req(pvplt())
+        ggplot2::ggsave(file, plot = pvplt(), device = "jpeg", width = 12, height = 5, dpi = 300)
+      }
+    )
+    # ## Download GV genetic gain plot. Commented it out because of space
+    # output$downloadgvgainplot <- shiny::downloadHandler(
+    #   filename = function(){
+    #     paste0("Genetic_value_gain_plot", Sys.Date(), ".jpeg")
+    #   },
+    #   content = function(file){
+    #     shiny::req(gvplt())
+    #     ggplot2::ggsave(file, plot = gvplt(), device = "jpeg", width = 8, height = 3, dpi = 300)
+    #   }
+    # )
+    ## Download variance decomposition plot
+    output$downloadvarianceplot <- shiny::downloadHandler(
+      filename = function(){
+        paste0("Variance_decomposition_plot_", Sys.Date(), ".jpeg")
+      },
+      content = function(file){
+        shiny::req(var_plot())
+        ggplot2::ggsave(file, plot = var_plot(), device = "jpeg", width = 12, height = 5, dpi = 300)
+      }
+    )
+
     #### End of server for Selection ++++++++++++++++++++++++++####
 
     #### Beginning server for GWAS ++++++++++++++++++++++++++####
@@ -1067,12 +1114,50 @@ run_visage <- function() {
     })
 
     ### Creating the Q-Q plot
+
     output$qqplot <- shiny::renderPlot({
       shiny::req(gwas_out())
       # GAPIT.QQ(P.values = gwas_out()$GWAS[, 4], plot.type = "P_values",
       #          name.of.trait = "Trait1")
       qqman::qq(pvector = gwas_out()$GWAS[, 4])
     })
+
+    ## Download GWAS results
+    output$downloadGWASresults <- shiny::downloadHandler(
+      filename = function(){
+        paste0("GWAS_results_", Sys.Date(), ".csv")
+      },
+      content = function(file){
+        shiny::req(gwas_out())
+        data.table::fwrite(file,file = as.data.frame(gwas_out()$GWAS))
+      }
+    )
+
+    ## Download Manhattan plot
+    output$downloadGWASman <- shiny::downloadHandler(
+      filename = function(){
+        paste0("Manhattan_plot_", Sys.Date(), ".jpeg")
+      },
+      content = function(file){
+        shiny::req(gwas_formatted(), base_pop())
+        grDevices::jpeg(file, width = 8, height = 4, res = 300, units = "in")
+        qqman::manhattan(x= gwas_formatted(), #col = c("#0455A4", "#FF5F05"),
+                         highlight = unlist(base_pop()[[3]]))
+        grDevices::dev.off()
+      }
+    )
+    ## Download Q-Q plot
+    output$downloadGWASqq <- shiny::downloadHandler(
+      filename = function(){
+        paste0("QQ_plot_", Sys.Date(), ".jpeg")
+      },
+      content = function(file){
+        shiny::req(gwas_out())
+        grDevices::jpeg(file, width = 4, height = 4, res = 300, units = "in")
+        qqman::qq(pvector = gwas_out()$GWAS[, 4])
+        grDevices::dev.off()
+      }
+    )
 
 
     #### End of server for GWAS ++++++++++++++++++++++++++####
@@ -1170,7 +1255,7 @@ run_visage <- function() {
       print(p)
     })
 
-    output$downloadCVScatter <- shiny::downloadHandler(
+    output$downloadCVscatterplot <- shiny::downloadHandler(
       filename = function() {
         paste0("Cross_validation_scatter_",input$numreps, "_reps_", Sys.Date(), ".jpg")
       },
@@ -1272,7 +1357,21 @@ run_visage <- function() {
       print(coin_plt())
     })
 
-    ## Create and download histogram
+    ## Download Coincidence plot
+    output$downloadGPciplot <- shiny::downloadHandler(
+      filename = function(){
+        paste0("Coincidence_index_plot_", Sys.Date(), ".jpeg")
+      },
+      content = function(file){
+        shiny::req(coin_plt())
+        grDevices::jpeg(file, width = 5, height = 5, res = 300, units = "in")
+        print(coin_plt())
+        grDevices::dev.off()
+      }
+    )
+
+
+    ## Create and download histogram of selection
     output$gphist1 <- shiny::renderPlot({
       # shiny::req(pred(), input$selectpct)
       # plot_histogram(y_vector = pred()[,2], percent = input$selectpct)
@@ -1292,7 +1391,7 @@ run_visage <- function() {
       content = function(file) {
         shiny::req(pred(), input$selectpct)
         ggplot2::ggsave(file, plot = test_selected()[[2]],
-                        device = "jpeg", width = 4, height = 4, dpi = 300)
+                        device = "jpeg", width = 5, height = 5, dpi = 300)
         # ggplot2::ggsave(file, plot = plot_histogram(y_vector = pred()[,2], percent = input$selectpct),
         #                 device = "jpeg", width = 4, height = 4, dpi = 300)
       }
@@ -1319,6 +1418,7 @@ run_visage <- function() {
         utils::write.csv(pred(), file, row.names = FALSE)
       }
     )
+
     ###### End of server for Genomic Prediction ++++++ ######
 
 

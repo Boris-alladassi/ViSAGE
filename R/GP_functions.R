@@ -419,8 +419,8 @@ gp_coincidence_plot <- function(df, var1, var2, q1 = 0.9) {
   maxi <- max(rbind(df[[var1]], df[[var2]]), na.rm = T)
 
   # compute quantiles
-  qx <- stats::quantile(df[[var1]], q1, na.rm = TRUE)
-  qy <- stats::quantile(df[[var2]], q1, na.rm = TRUE)
+  qx <- stats::quantile(df[[var1]], 1-q1, na.rm = TRUE)
+  qy <- stats::quantile(df[[var2]], 1-q1, na.rm = TRUE)
   rho <- stats::cor.test(df[[var1]], df[[var2]])
   # flag points
   df <- df |>
