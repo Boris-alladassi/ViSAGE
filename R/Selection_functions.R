@@ -324,19 +324,34 @@ genetic_gain <- function(dt, fill_factor1, fill_factor2, y_variable, trait_name 
   cols <- c("#4477AA", "#228833", "#AA3377", "grey30", "#CCBB14")
   names(cols) <- c("Directional_higher", "Directional_lower", "Disruptive",
                    "Stabilizing", "Random_drift")
-  plt <- ggplot2::ggplot(data = dt_plot, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
+  plt_comb <- ggplot2::ggplot(data = dt_plot, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
     ggplot2::geom_boxplot(ggplot2::aes(color = !!rlang::sym(fill_factor2))) +
     ggplot2::geom_line(data = dt_summary, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno, group = !!rlang::sym(fill_factor2),
                                                        color = !!rlang::sym(fill_factor2)), linewidth=1) +
-    ggplot2::geom_point(data = dt_summary,
-                        ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno,
-                                     color = !!rlang::sym(fill_factor2)), size=2,
-                        position = ggplot2::position_dodge(width = 0.75)) +
+    # ggplot2::geom_point(data = dt_summary,
+    #                     ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno,
+    #                                  color = !!rlang::sym(fill_factor2)), size=2,
+    #                     position = ggplot2::position_dodge(width = 0.75)) +
     ggplot2::labs(y = y_label, x = fill_factor1) +
     ggplot2::scale_color_manual(values = cols) +
     custom_theme
+
+  plt_line <- ggplot2::ggplot(data = dt_plot, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
+    ggplot2::geom_line(data = dt_summary,
+                       ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno, group = !!rlang::sym(fill_factor2),
+                                    color = !!rlang::sym(fill_factor2)), linewidth=1) +
+    ggplot2::geom_point(data = dt_summary,
+                        ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno,
+                                     color = !!rlang::sym(fill_factor2)), size=2) +
+                        # position = ggplot2::position_dodge(width = 0.75)) +
+    ggplot2::labs(y = y_label, x = fill_factor1) +
+    ggplot2::scale_color_manual(values = cols) +
+    custom_theme
+
+  out_list <- list(plt_comb = plt_comb, plt_line = plt_line)
+
   # "#4477AA" "#228833" "#AA3377" "#BBBBBB" "#66CCEE" "#CCBB44" "#EE6677"
-  return(plt)
+  return(out_list)
 }
 
 

@@ -145,7 +145,8 @@ run_visage <- function() {
                                                                            shiny::numericInput("NumGener", "Number of Generations", value = 20, min = 2),
                                                                            shiny::numericInput("NumCross", "Number of crosses per generation", value = 10, min = 1),
                                                                            shiny::numericInput("NumProgeny", "Number of progeny per cross", value = 10, min = 1),
-                                                                           shiny::actionButton(inputId = "multisimulate", "Perform selection", class = "btn btn-success")),
+                                                                           shiny::actionButton(inputId = "multisimulate", "Perform selection", class = "btn btn-success"),
+                                                                           shiny::radioButtons(inputId = "gain_type", "Keep boxplot?", choices = c("Yes" = "yes", "No" = "no"))),
 
                                                                bslib::card(class = "height: 6vh",
                                                                            shiny::actionButton(inputId = "reset", "Reset the app", class = "btn btn-warning"))
@@ -208,7 +209,9 @@ run_visage <- function() {
                                                                            shiny::conditionalPanel(
                                                                              condition = "input.gwasdtchoice == 'Using simulated data'",
                                                                              shiny::uiOutput("gwasseltype"),
-                                                                             shiny::uiOutput("gwasgeneration")
+                                                                             shiny::uiOutput("gwasgeneration"),
+                                                                             shiny::radioButtons(inputId = "keepqtnsgwas", label = "Include simulated QTNs in the analysis?",
+                                                                                                 choices = c("Include QTNs" = "yes", "Exclude QTNs" = "no"))
 
                                                                            ), #End of simulated data conditional panel
                                                                            shiny::conditionalPanel(
@@ -316,6 +319,9 @@ run_visage <- function() {
                                                                            shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using simulated data'",
                                                                                                    shiny::uiOutput("gpseltype"),
                                                                                                    shiny::uiOutput("gpgeneration"),
+                                                                                                   shiny::radioButtons(inputId = "keepqtnsgp", label = "Include simulated QTNs in the analysis?",
+                                                                                                                       choices = c("Include QTNs" = "yes", "Exclude QTNs" = "no"))
+
                                                                            ), #End of simulated data conditional panel
                                                                            shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data'",
                                                                                                    shiny::fileInput("phenodtgp", "Upload phenotypic data"),
@@ -536,7 +542,9 @@ run_visage <- function() {
                              e_eff = input$epieff,
                              tHet = input$bsh1_sp)
         }else if(input$basepopchoice == "Using variances"){
-          shiny::req(founders(), input$bsh1, input$tMean1, simparms())
+          shiny::req(founders(), input$bsh1, input$tMean1, simparms(),
+                     input$totalNqtn1, input$tMean1, input$VA1, input$VD1,
+                     input$VEpi1, input$ddeg, input$vddeg)
 
           create_base_pop(founders = founders(),
                           sp_object = simparms(),
@@ -546,7 +554,8 @@ run_visage <- function() {
                           tVD = input$VD1,
                           tVE = input$VEpi1,
                           tHet = input$bsh1,
-                          tdomDeg = input$ddeg, tVDomDeg = input$vddeg)
+                          tdomDeg = input$ddeg,
+                          tVDomDeg = input$vddeg)
         }# End of if-else for base population creation
       })
     })
@@ -606,9 +615,13 @@ run_visage <- function() {
       b_pop <- base_pop()[[2]]
       dt_trt <- as.data.frame(AlphaSimR::pheno(b_pop))
       colnames(dt_trt) <- "phenotype"
+      # nbin <- ifelse(length(unlist(base_pop()[[3]])) > 2, 10, 2)
       p <- ggplot2::ggplot(data = dt_trt, ggplot2::aes(x = phenotype)) +
-        ggplot2::geom_histogram(color = "white", fill = "#FF5F0F", bins = 10) +
-        ggplot2::labs(x = "Phenotypic values", y = "Number of individuals") +
+        ggplot2::geom_histogram(
+          ggplot2::aes(y = ggplot2::after_stat(density)),
+          color = "white", fill = "grey50", bins = 10) + #"#FF5F0F"
+        ggplot2::geom_density(color = "black") +
+        ggplot2::labs(x = "Phenotypic values", y = "Density") +
         boris_theme()
 
       phenodist(p)
@@ -895,15 +908,29 @@ run_visage <- function() {
 
     output$phenGainplot <- shiny::renderPlot({
       shiny::req(gaindt_reactive())
-      p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
-                   fill_factor2 = "Selection_type", y_variable = "phenotype")
+      if(input$gain_type == "yes"){
+        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+                          fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_comb
+      }else if(input$gain_type == "no"){
+        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+                          fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_line
+      }
+
+      # p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+      #              fill_factor2 = "Selection_type", y_variable = "phenotype")
       pvplt(p) ## Save the plot p in reactive
       p ## print the plot p
     })
     output$genGainplot <- shiny::renderPlot({
       shiny::req(gaindt_reactive())
-      p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
-                   fill_factor2 = "Selection_type", y_variable = "genetic_value")
+      if(input$gain_type == "yes"){
+        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+                          fill_factor2 = "Selection_type", y_variable = "genetic_value")$plt_comb
+      }else if(input$gain_type == "no"){
+        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+                          fill_factor2 = "Selection_type", y_variable = "genetic_value")$plt_line
+      }
+
       gvplt(p) ## Save the plot p in reactive
       p ## print the plot p
     })
@@ -981,9 +1008,18 @@ run_visage <- function() {
     ## Read in snp data
     gwas_snp <- shiny::reactive({
       if(input$gwasdtchoice == "Using simulated data"){
-        shiny::req(input$gwaseltype, input$gwasgeneration, gen_simulation())
-        (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gwasgeneration),
-                     sel_type = input$gwaseltype, SP_object = simparms()))$snp_data
+        shiny::req(input$gwaseltype, input$gwasgeneration, gen_simulation(), base_pop())
+        if(input$keepqtnsgwas == "yes"){
+          (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gwasgeneration),
+                       sel_type = input$gwaseltype, SP_object = simparms()))$snp_data
+
+        }else if(input$keepqtnsgwas == "no"){
+          snpdtgwas <- (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gwasgeneration),
+                       sel_type = input$gwaseltype, SP_object = simparms()))$snp_data
+          qtns <- unlist(base_pop()[[3]])
+          dplyr::select(snpdtgwas, -dplyr::all_of(qtns))
+        }
+
       }else if(input$gwasdtchoice == "Using my own data"){
         shiny::req(input$genodtgwas)
         file <- input$genodtgwas
@@ -998,8 +1034,15 @@ run_visage <- function() {
 
     gwas_map <- shiny::reactive({
       if(input$gwasdtchoice == "Using simulated data"){
-        shiny::req(simparms())
-        AlphaSimR::getGenMap(object = simparms())
+        shiny::req(simparms(), base_pop())
+        if(input$keepqtnsgwas == "yes"){
+          AlphaSimR::getGenMap(object = simparms())
+        }else if(input$keepqtnsgwas == "no"){
+         snpmap <- AlphaSimR::getGenMap(object = simparms())
+         qtns <- unlist(base_pop()[[3]])
+         dplyr::filter(snpmap, !(id %in% qtns))
+        }
+
       }else if(input$gwasdtchoice == "Using my own data"){
         # shiny::req(input$genomapgwas)
         file <- input$genomapgwas
@@ -1067,7 +1110,7 @@ run_visage <- function() {
     gwas_out <- shiny::eventReactive(input$rungwas,{
       shiny::req(gwas_pheno(), gwas_model())
       model_inputs <- gwas_model()
-      shiny::withProgress(message = "GWAS analysis is running ...", value = 0, {
+      shiny::withProgress(message = "GWAS analysis is running ...", {
         GAPIT(Y = gwas_pheno(),
               GD = gwas_snp(),
               GM = gwas_map(),
@@ -1183,9 +1226,17 @@ run_visage <- function() {
     ## Read in training set data
     tgeno_reactive <- shiny::reactive({
       if(input$gpdtchoice == "Using simulated data"){
-        shiny::req(input$gpseltype, input$gpgeneration, gen_simulation())
-        (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
-                     sel_type = input$gpseltype, SP_object = simparms()))$snp_data
+        shiny::req(input$gpseltype, input$gpgeneration, gen_simulation(), base_pop())
+        if(input$keepqtnsgp == "yes"){
+          (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
+                       sel_type = input$gpseltype, SP_object = simparms()))$snp_data
+        }else if(input$keepqtnsgp == "no"){
+          snpdt <- (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration),
+                       sel_type = input$gpseltype, SP_object = simparms()))$snp_data
+          qtns <- unlist(base_pop()[[3]])
+          dplyr::select(snpdt, -dplyr::all_of(qtns)) ## Here, we are removing the QTNs befor cross-validation
+        }
+
         # shiny::req(gp_sim_dt())
         # gp_sim_dt()$snp_data
       }else if(input$gpdtchoice == "Using my own data"){
@@ -1307,9 +1358,16 @@ run_visage <- function() {
 
     testgeno_reactive <- shiny::reactive({
       if(input$gpdtchoice == "Using simulated data"){
-        shiny::req(input$gpseltype2, input$gpgeneration2, gen_simulation())
-        (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration2),
-                     sel_type = input$gpseltype2, SP_object = simparms()))$snp_data
+        shiny::req(input$gpseltype2, input$gpgeneration2, gen_simulation(), base_pop())
+        if(input$keepqtnsgp == "yes"){ ##Keep the simulated QTNs in the analysis
+          (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration2),
+                      sel_type = input$gpseltype2, SP_object = simparms()))$snp_data
+        }else if(input$keepqtnsgp == "no"){ ##Exclude the simulated QTNs from the analysis
+          snpdt2 <- (sim_data_gp(mega_list = gen_simulation(), generation = as.numeric(input$gpgeneration2),
+                       sel_type = input$gpseltype2, SP_object = simparms()))$snp_data
+          qtns <- unlist(base_pop()[[3]])
+          dplyr::select(snpdt2, -dplyr::all_of(qtns))
+        }
 
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$testgenodtgp)

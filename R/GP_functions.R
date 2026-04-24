@@ -26,8 +26,8 @@ genomic_prediction_rrblup <- function(
   if (!all(c("genotype", "phenotype") %in% colnames(pheno_data)))
     stop("pheno_data must contain columns: genotype, phenotype")
   #
-  if (cv_type == "kfold" && (k < 2 || k > 10))
-    stop("k must be between 2 and 10")
+  # if (cv_type == "kfold" && (k < 2 || k > 10))
+  #   stop("k must be between 2 and 10")
 
   ## -----------------------------
   ## Align genotypes
@@ -99,7 +99,7 @@ genomic_prediction_rrblup <- function(
         repetition = as.factor(rep),
         genotype   = names(y)[test_idx],
         observed   = y[test_idx],
-        predicted  = round(gebv[test_idx],2),
+        predicted  = gebv[test_idx],
         stringsAsFactors = FALSE
       )
     }
@@ -223,7 +223,7 @@ plot_prediction <- function(cross_vd_dt){
                       label = label_text, hjust = 0, vjust = 1, size = 4) +
     ggplot2::geom_smooth(method = "lm", se = FALSE, color = NA)+
     ggpubr::stat_regline_equation(label.y.npc = 0.8)+
-    ggplot2::labs(y = "Observed phenotype", x = "Predicted phenotype") +
+    ggplot2::labs( x = "Predicted phenotype", y = "Observed phenotype") +
     ggplot2::scale_x_continuous(limits = c(mini, maxi)) +
     ggplot2::scale_y_continuous(limits = c(mini, maxi)) +
     boris_theme()

@@ -123,6 +123,7 @@ create_base_pop <- function(founders, sp_object, nQTN = NULL, tMean = NULL,
 }
 
 
+#### This function creates an SP object available within the simulation env.
 local_sp <- function(f_pop){
   SP <- AlphaSimR::SimParam$new(f_pop)
   return(SP)
@@ -243,7 +244,7 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
                                             home_dir = tempdir(),
                                             to_r = TRUE,
                                             quiet = T,
-                                            seed = 4000)
+                                            seed = sample(1:1000,1))
 
   ## Import the genetic and phenotypic values back into the population object
 
