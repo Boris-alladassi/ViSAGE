@@ -260,7 +260,7 @@ plot_histogram <- function(y_vector, percent) {
   print(p)
 }
 
-### This function extract the data needed genomic prediction cross-validation
+### This function extract the data needed for genomic prediction cross-validation
 ## the multi-generation and selection type simulation
 sim_data_gp <- function(mega_list, generation, sel_type, SP_object){
   # Simulate data for GWAS

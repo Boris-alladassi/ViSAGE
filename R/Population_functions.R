@@ -167,8 +167,9 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
 
 
 
-  ## Create base population. Note, pop cannot be created unless trait is added to SP.
+  # ## Create base population. Note, pop cannot be created unless trait is added to SP.
   pop <- AlphaSimR::newPop(founders, simParam = SP)
+  # pop <- AlphaSimR::randCross(pop = pop, nCrosses = 2*(founders@nInd), nProgeny = 1, simParam = SP)
 
   ## Set the phenotype for the base population
   ### Pulling out the genotypic/genomic data. This Does not work unless you have added a trait.
@@ -271,4 +272,36 @@ plot_pca_biplot <- function(pop){
                   y = paste0("PC2 ", round(100*pca_var[2],2), "%")) +
     boris_theme()
   return(plt)
+}
+
+
+import_population <- function(genotype, gene_map){
+  if(!identical(colnames(gene_map),c("markerName","chromosome", "position"))){
+    stop("gene_map should have snps in rows and the columns should be labeled: markerName, chromosome, and position in the order")
+  }
+  if(nrow(gene_map) != ncol(genotype)-1){
+    stop("The number of marker in the gene_map and genotype files DO NOT MATCH")
+  }
+  genotype <- genotype |>
+    tibble::column_to_rownames(var = names(genotype)[1]) |>
+    as.matrix()
+  pedig <- data.frame("id" = rownames(genotype),
+                      "mother" = rep(0,nrow(genotype)),
+                      "father" = rep(0, nrow(genotype)))
+  if(max(gene_map$position, na.rm = T) > 1e6){
+    gene_map$position <- cumsum(gene_map$position/1e8)
+  }
+  #geno should be a data frame with indiv as rows and snps as columns, and the first column is id, then markernames
+  #gene_map should have snps in rows and the columns: markerName, chromosome, and position
+  #ped should have individuals in rows and columns: id, mother, and father
+  num_seg_sites <- ncol(genotype)
+  num_founders <- nrow(genotype)
+  num_chrom <- length(unique(gene_map$chromosome))
+
+  #### create founder population
+  founders <- AlphaSimR::importInbredGeno(geno = genotype, genMap = gene_map, ped = pedig)
+
+  # out_list <- list(founders = founders, num_seg_sites = num_seg_sites,
+  #                  num_founders = num_founders, num_chrom = num_chrom)
+  return(founders)
 }

@@ -125,6 +125,11 @@ multi_generations_selection_sp <- function(initial_generation = NULL,
   nSelect = round((AlphaSimR::nInd(initial_generation) * selectPercent/100), 0)
   generation_data_list <- list(initial_generation)
 
+  # #### Quick for loop with stabiling selection
+  # initial_generation <- AlphaSimR::randCross(pop = initial_generation, nCrosses = nProgenyPerCross*nCross,
+  #                                            nProgeny = 1, simParam = SP_object)
+  #
+
   ###Loop through the n generations
   for(i in 1:nGenerations){
     # het <- ifelse(tHet == 0, (cor(gv(initial_generation), pheno(initial_generation)))^2, tHet)
@@ -317,15 +322,29 @@ genetic_gain <- function(dt, fill_factor1, fill_factor2, y_variable, trait_name 
   dt_summary <- dt |>
     dplyr::mutate(!!rlang::sym(fill_factor1) := as.factor(!!rlang::sym(fill_factor1)),
                   !!rlang::sym(fill_factor2) := as.factor(!!rlang::sym(fill_factor2)),
-                  mean_pheno = !!rlang::sym(y_variable)) |>
+                  mean_pheno = !!rlang::sym(y_variable),
+                  lower = !!rlang::sym(y_variable), upper = !!rlang::sym(y_variable)) |>
     dplyr::group_by(!!rlang::sym(fill_factor1), !!rlang::sym(fill_factor2)) |>
-    dplyr::summarise_at("mean_pheno", mean)
+    dplyr::summarise_at(y_variable,
+                        list(mean_pheno = ~ mean(!!rlang::sym(y_variable), na.rm = TRUE),
+                             lower = ~ min(!!rlang::sym(y_variable), na.rm = TRUE),
+                             upper = ~ max(!!rlang::sym(y_variable), na.rm = TRUE)),
+                             # lower = ~ stats::quantile(!!rlang::sym(y_variable), probs = 0.025, na.rm = TRUE),
+                             # upper = ~ stats::quantile(!!rlang::sym(y_variable), probs = 0.975, na.rm = TRUE)),
+                        .groups = "drop")
 
   cols <- c("#4477AA", "#228833", "#AA3377", "grey30", "#CCBB14")
   names(cols) <- c("Directional_higher", "Directional_lower", "Disruptive",
                    "Stabilizing", "Random_drift")
-  plt_comb <- ggplot2::ggplot(data = dt_plot, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
+  plt_boxplot <- ggplot2::ggplot(data = dt_plot, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
     ggplot2::geom_boxplot(ggplot2::aes(color = !!rlang::sym(fill_factor2))) +
+    ggplot2::geom_line(data = dt_summary, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno, group = !!rlang::sym(fill_factor2),
+                                                       color = !!rlang::sym(fill_factor2)), linewidth=1) +
+    ggplot2::labs(y = y_label, x = fill_factor1) +
+    ggplot2::scale_color_manual(values = cols) +
+    custom_theme
+  plt_violin <- ggplot2::ggplot(data = dt_plot, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
+    ggplot2::geom_violin(ggplot2::aes(color = !!rlang::sym(fill_factor2))) +
     ggplot2::geom_line(data = dt_summary, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno, group = !!rlang::sym(fill_factor2),
                                                        color = !!rlang::sym(fill_factor2)), linewidth=1) +
     # ggplot2::geom_point(data = dt_summary,
@@ -336,19 +355,27 @@ genetic_gain <- function(dt, fill_factor1, fill_factor2, y_variable, trait_name 
     ggplot2::scale_color_manual(values = cols) +
     custom_theme
 
-  plt_line <- ggplot2::ggplot(data = dt_plot, ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
-    ggplot2::geom_line(data = dt_summary,
-                       ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno, group = !!rlang::sym(fill_factor2),
+  plt_line <- ggplot2::ggplot(data = dt_summary, ggplot2::aes(x = !!rlang::sym(fill_factor1))) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, group = !!rlang::sym(fill_factor2),
+                                      fill = !!rlang::sym(fill_factor2)), alpha = 0.2) +
+    ggplot2::geom_line(ggplot2::aes(y = mean_pheno, group = !!rlang::sym(fill_factor2),
                                     color = !!rlang::sym(fill_factor2)), linewidth=1) +
-    ggplot2::geom_point(data = dt_summary,
-                        ggplot2::aes(x = !!rlang::sym(fill_factor1), y = mean_pheno,
-                                     color = !!rlang::sym(fill_factor2)), size=2) +
-                        # position = ggplot2::position_dodge(width = 0.75)) +
+    ggplot2::labs(y = y_label, x = fill_factor1) +
+    ggplot2::scale_color_manual(values = cols) +
+    ggplot2::scale_fill_manual(values = cols) +
+    custom_theme
+
+  plt_jitter <- ggplot2::ggplot(data = dt_plot,
+                                ggplot2::aes(x = !!rlang::sym(fill_factor1), y = !!rlang::sym(y_variable))) +
+    ggplot2::geom_jitter(ggplot2::aes(color = !!rlang::sym(fill_factor2)), alpha = 0.3)+
+    ggplot2::geom_line(data = dt_summary, ggplot2::aes(y = mean_pheno, group = !!rlang::sym(fill_factor2),
+                                    color = !!rlang::sym(fill_factor2)), linewidth=1.2) +
     ggplot2::labs(y = y_label, x = fill_factor1) +
     ggplot2::scale_color_manual(values = cols) +
     custom_theme
 
-  out_list <- list(plt_comb = plt_comb, plt_line = plt_line)
+  out_list <- list(plt_jitter = plt_jitter, plt_boxplot = plt_boxplot,
+                   plt_line = plt_line, plt_violin = plt_violin)
 
   # "#4477AA" "#228833" "#AA3377" "#BBBBBB" "#66CCEE" "#CCBB44" "#EE6677"
   return(out_list)
@@ -357,13 +384,12 @@ genetic_gain <- function(dt, fill_factor1, fill_factor2, y_variable, trait_name 
 
 #' Compute and plot variance components across generations
 #'
-#' @param gen_list
-#' @param SP_object
+#' @param gen_list a list of AlphaSimR pop objects for generations
+#' @param SP_object simulation parameters container
 #'
-#' @returns
-#' @export
+#' @returns a stacked bar plot of variance components as proportions
+#' @noRd
 #'
-#' @examples
 computeVariancePlot <- function(gen_list, SP_object) {
   # if(length(gen_list) == 0) {
   #   stop("gen_list is empty. Please provide a list of population objects from AlphaSimR.")
@@ -404,22 +430,16 @@ computeVariancePlot <- function(gen_list, SP_object) {
                    axis.ticks = ggplot2::element_line(linewidth = 1, colour = "black"),
                    legend.text = ggplot2::element_text(colour = "black", size = 12),
                    text = ggplot2::element_text(colour = "black", size = 12))
-  fill_col <- c("Additive" = "#1b9e77", "Dominance" = "#d95f02",
-                "AA_Epistasis" = "#7570b3")
 
-  p <- ggplot2::ggplot(
-    variance_long,
-    ggplot2::aes(
-      x = base::factor(.data$generation),
-      y = .data$proportion,
-      fill = .data$component
-    )
-  ) +
+  fill_col <- c("#1b9e77", "#d95f02", "#7570b3")
+  names(fill_col) <- c("Additive", "Dominance", "AA_Epistasis")
+
+  p <- ggplot2::ggplot(variance_long,
+    ggplot2::aes(x = base::factor(.data$generation), y = .data$proportion,
+                 fill = .data$component)) +
     ggplot2::geom_bar(stat = "identity") +
-    ggplot2::labs(x = "Generation", y = "Prop. of Variance",
-                  title = " ") +
-    ggplot2::scale_fill_manual(
-      values = fill_col) +
+    ggplot2::labs(x = "Generation", y = "Prop. of Variance", title = " ") +
+    ggplot2::scale_fill_manual(values = fill_col) +
     custom_theme
 
   # # Return both data and plot
@@ -492,21 +512,40 @@ computeVariancePlot_SP <- function(gen_list, SP_object) {
     # -------------------------
     # Allele frequency
     # -------------------------
-    allele_freq <- tidyr::pivot_wider(
-      dplyr::select(genotype_stats, -mean_trait),
-      names_from = Dosage,
-      values_from = n, names_prefix = "freq_") |>
-      dplyr::mutate(p = (2*freq_0 + freq_1)/(2*nindiv),
-                    q = 1-p)
+
+    allele_freq <- genotype_stats |>
+      dplyr::select(-mean_trait) |>
+      tidyr::pivot_wider(names_from = Dosage,
+                         values_from = n,
+                         names_prefix = "freq_")
+
+    # Ensure required columns exist
+    for (col in c("freq_0", "freq_1", "freq_2")) {
+      if (!col %in% names(allele_freq)) {
+        allele_freq[[col]] <- 0
+      }
+    }
+
+    allele_freq <- allele_freq |>
+      dplyr::mutate(
+        p = (2 * freq_0 + freq_1) / (2 * nindiv),
+        q = 1 - p
+      )
 
     # -------------------------
     # Gene action effect: a & d
     # -------------------------
-    a_d_effect <- tidyr::pivot_wider(
-      dplyr::select(genotype_stats, -n),
-      names_from = Dosage,
-      values_from = mean_trait,
-      names_prefix = "mu_") |>
+    a_d_effect <- genotype_stats |>
+      dplyr::select(-n) |>
+      tidyr::pivot_wider(names_from = Dosage,
+                         values_from = mean_trait,
+                         names_prefix = "mu_")
+    for(col in c("mu_0", "mu_1", "mu_2")){
+      if(!(col %in% names(a_d_effect))){
+        a_d_effect[[col]] <- 0
+      }
+    }
+    a_d_effect <- a_d_effect |>
       dplyr::mutate(a = (mu_0 - mu_2)/2,
                     d = mu_1 - (mu_0 + mu_2)/2)
 
@@ -560,8 +599,9 @@ computeVariancePlot_SP <- function(gen_list, SP_object) {
                    axis.ticks = ggplot2::element_line(linewidth = 1, colour = "black"),
                    legend.text = ggplot2::element_text(colour = "black", size = 12),
                    text = ggplot2::element_text(colour = "black", size = 12))
-  fill_col <- c("Additive" = "#1b9e77", "Dominance" = "#d95f02",
-                "AA_Epistasis" = "#7570b3")
+
+  fill_col <- c("#1b9e77", "#d95f02", "#7570b3")
+  names(fill_col) <- c("Additive", "Dominance", "AA_Epistasis")
 
   p <- ggplot2::ggplot(
     variance_long,

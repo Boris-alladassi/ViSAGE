@@ -17,6 +17,7 @@ run_visage <- function() {
     prefix = "www",
     directoryPath = system.file("app/www", package = "ViSAGE")
   )
+  options(shiny.maxRequestSize = 100 * 1024^2)  # 100 MB
 
 
   ########################################################################################################################
@@ -42,10 +43,22 @@ run_visage <- function() {
                         shiny::column(width = 3,
                                       shiny::div(class = "scroll-col",    #"height: 90vh; overflow-y: auto;",
                                                  bslib::card(class = "height: 20vh; overflow-y: hidden;", bslib::card_header("Founders"),
-                                                             shiny::numericInput("numFounder", "Number of founders", value = 100, min = 1),
-                                                             shiny::numericInput("numChr", "Number of chromosomes", value = 1, min = 1),
-                                                             shiny::numericInput("totalSeg", "Number of segregation sites", value = 1, min = 1),
-                                                             shiny::actionButton(inputId = "createfounder", "Create founders", class = "btn btn-success")),
+                                                             shiny::selectInput("founderchoice", "How would you like to simulate the founders?",
+                                                                                choices = c("Using internal functions", "Using external data")),
+                                                             shiny::conditionalPanel(condition = "input.founderchoice == 'Using internal functions'",
+                                                                                     shiny::numericInput("numFounder", "Number of founders", value = 100, min = 1),
+                                                                                     shiny::numericInput("numChr", "Number of chromosomes", value = 1, min = 1),
+                                                                                     shiny::numericInput("totalSeg", "Number of segregation sites", value = 1, min = 1)),
+                                                             shiny::conditionalPanel(condition = "input.founderchoice == 'Using external data'",
+                                                                                     shiny::div(shiny::fileInput(inputId = "popgeno", "Upload the genotype data"),
+                                                                                                title = "Upload a CSV file with individuals as rows and snps as columns,
+                                                                                                and the first column is for the individuals names"),
+                                                                                     shiny::fileInput(inputId = "popgenmap", label = "Upload the genetic map"),
+                                                                                     shiny::textOutput(outputId = "numFounder2"),
+                                                                                     shiny::textOutput(outputId = "numChr2"),
+                                                                                     shiny::textOutput(outputId = "totalSeg2")),
+                                                             shiny::actionButton(inputId = "createfounder", "Create founders", class = "btn btn-success")
+                                                 ), #End of Founders card
 
                                                  bslib::card(class = "height: 30vh; overflow-y: hidden;", bslib::card_header("Base population"),
                                                              shiny::selectInput(inputId = "basepopchoice", label = "How would you like to simulate your trait?",
@@ -146,7 +159,8 @@ run_visage <- function() {
                                                                            shiny::numericInput("NumCross", "Number of crosses per generation", value = 10, min = 1),
                                                                            shiny::numericInput("NumProgeny", "Number of progeny per cross", value = 10, min = 1),
                                                                            shiny::actionButton(inputId = "multisimulate", "Perform selection", class = "btn btn-success"),
-                                                                           shiny::radioButtons(inputId = "gain_type", "Keep boxplot?", choices = c("Yes" = "yes", "No" = "no"))),
+                                                                           shiny::selectInput(inputId = "gain_type", "Choose your plotting style",
+                                                                                              choices = c("Jitter", "Line","Boxplot", "Violin"), selected = "Jitter")),
 
                                                                bslib::card(class = "height: 6vh",
                                                                            shiny::actionButton(inputId = "reset", "Reset the app", class = "btn btn-warning"))
@@ -283,8 +297,8 @@ run_visage <- function() {
                                                                ),#End of shiny::fluidRow GWAS Manhattan plot
                                                                shiny::fluidRow(class = "height: 20vh",#GWAS outputs
                                                                                bslib::card(full_screen = TRUE, height = 400,
-                                                                                           bslib::card_header("Manhathan plot"),
-                                                                                           shiny::plotOutput(outputId = "manhathanplot"))
+                                                                                           bslib::card_header("Manhattan plot"),
+                                                                                           shiny::plotOutput(outputId = "manhattanplot"))
                                                                ),#End of shiny::fluidRow Manhattan plot
 
                                                                shiny::fluidRow(class = "height: 10vh",#Download buttons
@@ -470,12 +484,62 @@ run_visage <- function() {
 
     #### Beginning of server for POPULATION ++++++++++++++++++++++++++####
     founders <- shiny::reactiveVal(NULL)
+
+    genopop <- shiny::reactive({
+      shiny::req(input$popgeno)
+      file <- input$popgeno
+      if(is.null(file)){return(NULL)}
+      ext <- tools::file_ext(file$name)
+      data.table::fread(file$datapath)
+
+      # switch(ext,
+      #        "csv" = utils::read.csv(file$datapath, header = TRUE),
+      #        "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
+      #        NULL)
+    })
+
+    gmpop <- shiny::reactive({
+      shiny::req(input$popgenmap)
+      file <- input$popgenmap
+      if(is.null(file)){return(NULL)}
+      ext <- tools::file_ext(file$name)
+      data.table::fread(file$datapath)
+      # switch(ext,
+      #        "csv" = utils::read.csv(file$datapath, header = TRUE),
+      #        "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
+      #        NULL)
+    })
+
     shiny::observeEvent(input$createfounder, {
-      shiny::req(input$numFounder, input$numChr, input$totalSeg)
-      shiny::withProgress(message = "Creating founders ...", value = 0, {
-        new_f <- create_founders(nfounders = input$numFounder, nChrom = input$numChr, nSites = input$totalSeg)
-        founders(new_f)
-      })
+      if(input$founderchoice == "Using internal functions"){
+        shiny::req(input$numFounder, input$numChr, input$totalSeg)
+        shiny::withProgress(message = "Creating founders ...", value = 0, {
+          new_f <- create_founders(nfounders = input$numFounder, nChrom = input$numChr, nSites = input$totalSeg)
+          founders(new_f)
+        })
+      }else if(input$founderchoice == "Using external data"){
+        shiny::req(genopop(), gmpop())
+        shiny::withProgress(message = "Creating founders ...", value = 0, {
+          new_f <- import_population(genotype = genopop(), gene_map = gmpop())
+          founders(new_f)
+        })
+      }
+
+    })
+
+    output$numFounder2 <- shiny::renderText({
+      shiny::req(genopop(), gmpop())
+      paste0("Your data has ", nrow(genopop()), " founders")
+    })
+
+    output$numChr2 <- shiny::renderText({
+      shiny::req(genopop(), gmpop())
+      paste0("Your data has ", length(unique(gmpop()$chromosome)), " chromosomes")
+    })
+
+    output$totalSeg2 <- shiny::renderText({
+      shiny::req(genopop(), gmpop())
+      paste0("Your data has ", nrow(gmpop()), " segregation sites")
     })
 
     simparms <- shiny::eventReactive(founders(),{
@@ -529,6 +593,15 @@ run_visage <- function() {
           #        Please resimulate founders with at least,", totnumQTNs, "Segregation sites"))
           # }
           shiny::req(founders(), input$bsh1_sp, input$tMean1_sp, simparms())
+          shiny::updateNumericInput(session, "tMean1_sp", value = input$tMean1_sp)
+          shiny::updateNumericInput(session, "numadd",    value = input$numadd)
+          shiny::updateNumericInput(session, "numdom",    value = input$numdom)
+          shiny::updateNumericInput(session, "numepi",    value = input$numepi)
+          shiny::updateNumericInput(session, "Baddeff",   value = input$Baddeff)
+          shiny::updateNumericInput(session, "addeff",    value = input$addeff)
+          shiny::updateNumericInput(session, "domeff",    value = input$domeff)
+          shiny::updateNumericInput(session, "epieff",    value = input$epieff)
+          shiny::updateNumericInput(session, "bsh1_sp",   value = input$bsh1_sp)
 
           create_base_pop_sp(founders = founders(),
                              sp_object = simparms(),
@@ -907,29 +980,64 @@ run_visage <- function() {
     pvplt <- shiny::reactiveVal(NULL)
 
     output$phenGainplot <- shiny::renderPlot({
-      shiny::req(gaindt_reactive())
-      if(input$gain_type == "yes"){
-        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
-                          fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_comb
-      }else if(input$gain_type == "no"){
-        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
-                          fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_line
-      }
+      shiny::req(gaindt_reactive(), input$gain_type)
 
-      # p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
-      #              fill_factor2 = "Selection_type", y_variable = "phenotype")
-      pvplt(p) ## Save the plot p in reactive
-      p ## print the plot p
+      gg <- genetic_gain(
+        dt = gaindt_reactive(),
+        fill_factor1 = "Generation",
+        fill_factor2 = "Selection_type",
+        y_variable = "phenotype"
+      )
+
+      p <- switch(input$gain_type,
+        "Jitter"  = gg$plt_jitter,
+        "Line"    = gg$plt_line,
+        "Boxplot" = gg$plt_boxplot,
+        "Violin"  = gg$plt_violin
+      )
+
+      pvplt(p)   # save plot if needed
+      p          # render plot
     })
+
+    # output$phenGainplot <- shiny::renderPlot({
+    #   shiny::req(gaindt_reactive())
+    #   gdt <- gaindt_reactive()
+    #   if(input$gain_type == "Jitter"){
+    #     p <- genetic_gain(dt = gdt, fill_factor1 = "Generation",
+    #                       fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_comb
+    #   }else if(input$gain_type == "Line"){
+    #     p <- genetic_gain(dt = gdt, fill_factor1 = "Generation",
+    #                       fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_line
+    #   }else if(input$gain_type == "Boxplot"){
+    #     p <- genetic_gain(dt = gdt, fill_factor1 = "Generation",
+    #                       fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_boxplot
+    #   }else if(input$gain_type == "Violin"){
+    #     p <- genetic_gain(dt = gdt, fill_factor1 = "Generation",
+    #                       fill_factor2 = "Selection_type", y_variable = "phenotype")$plt_violin
+    #   }
+    #
+    #   # p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
+    #   #              fill_factor2 = "Selection_type", y_variable = "phenotype")
+    #   pvplt(p) ## Save the plot p in reactive
+    #   p ## print the plot p
+    # })
     output$genGainplot <- shiny::renderPlot({
-      shiny::req(gaindt_reactive())
-      if(input$gain_type == "yes"){
-        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
-                          fill_factor2 = "Selection_type", y_variable = "genetic_value")$plt_comb
-      }else if(input$gain_type == "no"){
-        p <- genetic_gain(dt = gaindt_reactive(), fill_factor1 = "Generation",
-                          fill_factor2 = "Selection_type", y_variable = "genetic_value")$plt_line
-      }
+      shiny::req(gaindt_reactive(), input$gain_type)
+
+      gg <- genetic_gain(
+        dt = gaindt_reactive(),
+        fill_factor1 = "Generation",
+        fill_factor2 = "Selection_type",
+        y_variable = "genetic_value"
+      )
+
+      p <- switch(input$gain_type,
+                  "Jitter"  = gg$plt_jitter,
+                  "Line"    = gg$plt_line,
+                  "Boxplot" = gg$plt_boxplot,
+                  "Violin"  = gg$plt_violin
+      )
 
       gvplt(p) ## Save the plot p in reactive
       p ## print the plot p
@@ -1110,7 +1218,7 @@ run_visage <- function() {
     gwas_out <- shiny::eventReactive(input$rungwas,{
       shiny::req(gwas_pheno(), gwas_model())
       model_inputs <- gwas_model()
-      shiny::withProgress(message = "GWAS analysis is running ...", {
+      shiny::withProgress(message = "GWAS analysis is running ...", value = 0, {
         GAPIT(Y = gwas_pheno(),
               GD = gwas_snp(),
               GM = gwas_map(),
@@ -1121,6 +1229,7 @@ run_visage <- function() {
               PCA.total = input$numpcs,
               Model.selection = FALSE,
               file.output = FALSE)
+        shiny::incProgress(1)
       })
 
     })
@@ -1150,7 +1259,7 @@ run_visage <- function() {
       format_gapit_results(data = as.data.frame(gwas_out()$GWAS), package = "qqman")
     })
 
-    output$manhathanplot <- shiny::renderPlot({
+    output$manhattanplot <- shiny::renderPlot({
       shiny::req(gwas_formatted(), base_pop())
       qqman::manhattan(x= gwas_formatted(), #col = c("#0455A4", "#FF5F05"),
                        highlight = unlist(base_pop()[[3]]))
