@@ -69,6 +69,104 @@ get.me.my.SNPs.in.hapmap.format <- function(these.SNPs = NA,
   return(hapmap.file.of.these.SNPs)
 } #end get.me.my.SNPs.in.hapmap.format
 
+#' Compute MAF and sort SNPs in ascending order of MAF values
+#'
+#' @param geno_dt a data frame of snp markers scores from AlphasimR suing pullSegGeno
+#' @param qtns a vector of snp names selected to be qtns
+#'
+#' @returns a vector of sorted snps names based on MAF
+#' @noRd
+#'
+compute_sort_MAF <- function(geno_dt, qtns) {
+
+  # geno_dt <- AlphaSimR::pullQtlGeno(pop, trait = 1, simParam = SP_object)
+  geno_df <- data.frame(ID = paste0("ID",1:nrow(geno_dt)), geno_dt)
+  qtns <- paste0("X", qtns)
+  geno_df <- geno_df |> dplyr::select_at(c("ID", qtns))
+
+  # Input validation
+
+  if (!"ID" %in% colnames(geno_df)) {
+    stop("The firtst column of geno_df must be the 'ID' column.")
+  }
+
+  # Quick stats
+
+  markers <- colnames(geno_df)[-1]
+  nloci <- length(markers)
+  nindiv <- nrow(geno_df)
+
+  # Convert to long format
+
+  long_df <- tidyr::pivot_longer(
+    data = geno_df,
+    cols = dplyr::all_of(markers),
+    names_to = "SNP",
+    values_to = "Dosage"
+  )
+
+  # Genotype means and counts
+  genotype_stats <- dplyr::group_by(long_df, SNP, Dosage) |>
+    dplyr::summarise(n = dplyr::n(),
+                     .groups = "drop") |>
+    tidyr::pivot_wider(names_from = Dosage,
+                       values_from = n,
+                       names_prefix = "freq_")
+
+  # Allele frequency
+
+  # Ensure required columns exist
+  for (col in c("freq_0", "freq_1", "freq_2")) {
+    if (!col %in% names(genotype_stats)) {
+      genotype_stats[[col]] <- 0
+    }
+  }
+
+  allele_freq <- genotype_stats |>
+    dplyr::mutate(
+      p = (2 * freq_0 + freq_1) / (2 * nindiv),
+      q = 1 - p,
+      maf = pmin(p,q, na.rm = T)) |>
+    dplyr::arrange(maf)
+
+  ## Ordered markers
+  ordered_snps <- sub("X","", allele_freq$SNP)
+  # out_list <- list(allele_freq = allele_freq,
+  # ordered_snps = ordered_snps)
+
+  return(ordered_snps)
+
+}
+
+#' Random selection of snps from a data frame to be used as QTNs
+#'
+#' @param hapmap_obj a data frame of snp markers scores in hapmap format
+#' @param a_qtns an integer representing the number of additive qtns
+#' @param d_qtns an integer representing the number of dominance qtns
+#' @param e_qtns an integer representing the number of pairwise epistatic qtns
+#' @param seed_num an integer representing the seed number
+#'
+#' @returns a list with all slected snps as qtns
+#' @noRd
+#'
+select_qtns <- function(hapmap_obj, a_qtns, d_qtns, e_qtns, seed_num){
+  if(identical(c(a_qtns, d_qtns, e_qtns), rep(0,3))){
+    stop("")
+  }else{
+    set.seed(seed = seed_num)
+    a_list <- sample(hapmap_obj$snp, a_qtns)
+    d_list <- sample(setdiff(hapmap_obj$snp, a_list), d_qtns)
+    e_list <- sample(setdiff(hapmap_obj$snp, c(a_list, d_list)), 2*e_qtns)
+
+    QTN_list <- list()
+    QTN_list$add[[1]] <- a_list
+    QTN_list$dom[[1]] <- d_list
+    QTN_list$epi[[1]] <- e_list
+    return(QTN_list)
+  }
+
+}
+
 ### An updated function to create the base population (AlphaSimR)
 #' Create a base population using AlphaSimR.
 #' @description
@@ -142,12 +240,14 @@ local_sp <- function(f_pop){
 #' @param d_eff a numeric value representing the effect size of the dominance QTNs for the trait.
 #' @param e_eff a numeric value representing the effect size of the epistatic QTNs for the trait.
 #' @param tHet a numeric value representing the broad-sense heritability of the trait.
+#' @param sp_object a simulation parameter container from AlphaSimR
+#' @param sort_maf a string to determine whether to implement negative correlation between MAF and additive effect size
 #'
 #' @returns A list containing the genetic architecture 'arch' of the trait and the simulated base population object.
 #' @noRd
 create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
                             a_QTNs = 0, d_QTNs = 0, e_QTNs = 0,
-                            big_a_eff = 0, a_eff = 0, d_eff = 0, e_eff = 0, tHet=NULL){
+                            big_a_eff = 0, a_eff = 0, d_eff = 0, e_eff = 0, tHet=NULL, sort_maf = "No"){
 
   ## Required conditions for the simulations
   if(identical(c(a_QTNs,d_QTNs, e_QTNs), rep(0,3))){
@@ -201,6 +301,60 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
   QTN_list <- select_qtns(hapmap_obj = bp_qtls_hapmap, a_qtns = a_QTNs,
                           d_qtns = d_QTNs, e_qtns = e_QTNs, seed_num = 1989)
 
+  ### a nested function to order QTNs
+  compute_sort_MAF <- function(geno_dt, qtns) {
+
+    # Add ID column (avoid full data.frame copy if possible)
+    geno_df <- data.frame(ID = paste0("ID", seq_len(nrow(geno_dt))), geno_dt)
+
+    # Fix marker names (prefix X if starting with number)
+    qtns <- ifelse(grepl("^[0-9]", qtns), paste0("X", qtns), qtns)
+
+    # Select only required columns
+    geno_df <- dplyr::select(geno_df, "ID", dplyr::all_of(qtns))
+
+    # Input validation
+    if (!"ID" %in% colnames(geno_df)) {
+      stop("The first column of geno_df must be 'ID'.")
+    }
+
+    # Extract genotype matrix (avoid repeated indexing)
+    geno_mat <- as.matrix(geno_df[, -1, drop = FALSE])
+    nindiv <- nrow(geno_mat)
+
+    # Replace NA with 0 (or decide if you want NA-aware calculation)
+    geno_mat[is.na(geno_mat)] <- 0
+
+    # Compute allele frequency directly
+    # p = frequency of allele coded as 0 (based on your formula)
+    p <- colSums(2 * (geno_mat == 0) + 1 * (geno_mat == 1)) / (2 * nindiv)
+
+    q <- 1 - p
+    maf <- pmin(p, q)
+
+    # Create result dataframe
+    allele_freq <- data.frame(
+      SNP = colnames(geno_mat),
+      p = p,
+      q = q,
+      maf = maf
+    )
+
+    # Sort by MAF
+    allele_freq <- dplyr::arrange(allele_freq, maf)
+
+    # Remove "X" prefix if added earlier
+    ordered_snps <- sub("^X", "", allele_freq$SNP)
+
+    return(ordered_snps)
+  } # End of function compute_sort_MAF
+
+  if(sort_maf == "Yes"){
+    snps <- QTN_list$add[[1]]
+    ord_snps <- compute_sort_MAF(geno_dt = bp_qtls, qtns = snps)
+    QTN_list$add[[1]] <- ord_snps
+  }
+
   ## Determine the genetic architecture of the trait
   arch <- ""
   if (a_QTNs != 0 & !identical(c(a_eff, big_a_eff), rep(0,2))) arch <- paste0(arch, "A")
@@ -208,15 +362,15 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
   if (e_QTNs != 0 & e_eff != 0) arch <- paste0(arch, "E")
 
 
-  a_QTNs   <- if (a_QTNs   == 0) NULL else a_QTNs
+  a_QTNs    <- if (a_QTNs   == 0) NULL else a_QTNs
   big_a_eff <- if (big_a_eff == 0) NULL else big_a_eff
-  a_eff    <- if (a_eff    == 0) NULL else a_eff
+  a_eff     <- if (a_eff    == 0) NULL else a_eff
 
-  d_QTNs   <- if (d_QTNs   == 0) NULL else d_QTNs
-  d_eff    <- if (d_eff    == 0) NULL else d_eff
+  d_QTNs    <- if (d_QTNs   == 0) NULL else d_QTNs
+  d_eff     <- if (d_eff    == 0) NULL else d_eff
 
-  e_QTNs   <- if (e_QTNs   == 0) NULL else e_QTNs
-  e_eff    <- if (e_eff    == 0) NULL else e_eff
+  e_QTNs    <- if (e_QTNs   == 0) NULL else e_QTNs
+  e_eff     <- if (e_eff    == 0) NULL else e_eff
 
   # a_QTNs <<- a_QTNs; big_a_eff <<- big_a_eff; a_eff <<- a_eff;
   # d_QTNs <<- d_QTNs; d_eff <<- d_eff; e_QTNs <<- e_QTNs; e_eff <<- e_eff
@@ -260,18 +414,42 @@ create_base_pop_sp <- function(founders, sp_object, tMean = NULL,
 
 
 #### A function to plot PCA biplot of snp data +++++++++++++++++++++++++ #######
-plot_pca_biplot <- function(pop){
-  geno_mat <- AlphaSimR::pullSegSiteGeno(pop)
+plot_pca_biplot <- function(pop = NULL, geno = NULL){
+  if(!is.null(pop)){
+    geno_mat <- AlphaSimR::pullSegSiteGeno(pop)
+  }else if(!is.null(geno)){
+    geno_mat <- geno[,-1]
+  }else{stop("You need to provide either a pop object or a marker data (geno).")}
+
   pca_res <- stats::prcomp(geno_mat, center = TRUE, scale. = TRUE)
   pca_var <- (summary(pca_res)$importance)[2,1:2]
+  num_axis <- ifelse(length(pca_res$sdev) > 10, 10, length(pca_res$sdev))
+  pca_var_df <- as.data.frame(t(100*(summary(pca_res)$importance)[2:3,1:num_axis])) |>
+    dplyr::mutate(axes = 1:num_axis)
+  colnames(pca_var_df) <- c("Prop_var", "Cum_var", "axes")
   pca_df <- as.data.frame(pca_res$x[,1:5])
 
-  plt <- ggplot2::ggplot(pca_df, ggplot2::aes(x = PC1, y = PC2)) +
+  biplt <- ggplot2::ggplot(pca_df, ggplot2::aes(x = PC1, y = PC2)) +
     ggplot2::geom_point(alpha = 0.7, color = "darkblue") +
     ggplot2::labs(x = paste0("PC1 ", round(100*pca_var[1],2), "%"),
                   y = paste0("PC2 ", round(100*pca_var[2],2), "%")) +
     boris_theme()
-  return(plt)
+
+  screeplt <- ggplot2::ggplot(data = pca_var_df, ggplot2::aes(x = axes)) +
+    ggplot2::geom_point(ggplot2::aes(y = Prop_var, color = "Proportion"), size = 3) +
+    ggplot2::geom_line(ggplot2::aes(y = Prop_var, color = "Proportion"), linewidth  = 1) +
+    ggplot2::geom_point(ggplot2::aes(y = Cum_var, color = "Cumulative"), size = 3) +
+    ggplot2::geom_line(ggplot2::aes(y = Cum_var, color = "Cumulative"), linewidth  = 1) +
+    ggplot2::labs(x = "Axes", y = "Variance") +
+    ggplot2::scale_x_continuous(breaks = 1:num_axis, labels = paste0("PC", 1:num_axis)) +
+    ggplot2::scale_y_continuous(limits = c(0,100) ,breaks = seq(0,100,20)) +
+    ggplot2::scale_color_manual(values = c("Proportion" = "darkblue", "Cumulative" = "darkred"))+
+    boris_theme() + ggplot2::theme(legend.position = c(0.3, 0.8),
+                                   axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+
+  out_list <- list(biplt = biplt, screeplt = screeplt)
+
+  return(out_list)
 }
 
 
