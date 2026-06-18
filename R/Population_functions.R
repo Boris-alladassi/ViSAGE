@@ -430,9 +430,13 @@ plot_pca_biplot <- function(pop = NULL, geno = NULL){
   }
 
   monomorphics <- find_constant_cols(df = as.data.frame(geno_mat))
+  # print(paste0("There were", length(monomorphics), "markers found."))
 
   ## Exclude the monomorphics
-  geno_mat <- geno_mat[,-which(colnames(geno_mat) %in% monomorphics)]
+  if(length(monomorphics) > 0){
+    geno_mat <- as.data.frame(geno_mat)
+    geno_mat <- geno_mat[,-which(colnames(geno_mat) %in% monomorphics),]
+  }
 
   ## Now run PCA analysis
   pca_res <- stats::prcomp(geno_mat, center = T, scale. = T)
