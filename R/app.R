@@ -286,7 +286,7 @@ run_visage <- function() {
                                                                bslib::card(class = "height: 5vh",
                                                                            shiny::actionButton(inputId = "reset", "Reset the app", class = "btn btn-warning")),
                                                                bslib::card(class = "height: 5vh",
-                                                                           shiny::tags$img(src = "www/Gapit_Logo_draft4.jpg",height = "100%", width = "100%"))
+                                                                           shiny::tags$img(src = "www/New_gapit_logo.png",height = "100%", width = "100%"))
                                                     )#End of left div
                                       ), #End of LEFT column
 

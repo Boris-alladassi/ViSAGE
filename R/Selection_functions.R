@@ -141,6 +141,8 @@ multi_generations_selection_sp <- function(initial_generation = NULL,
     # # will allow us to use info of the previous generation in GWAS and GS
     # previous.generation = initial_generation
 
+    # print(paste0("The initial mean is:", mean(AlphaSimR::gv(initial_generation))))
+
     #Breeding decision for ith breeding program...select individuals
     if(selectionType == "Random_drift"){
       selected_inds = AlphaSimR::selectInd(pop = initial_generation, use = "rand", trait = tSel,
@@ -166,6 +168,7 @@ multi_generations_selection_sp <- function(initial_generation = NULL,
 
     ### Need to update the trait mean
     new_tMean <- mean(AlphaSimR::gv(selected_inds))
+    # print(paste0("The new mean of selected is ", new_tMean))
 
     #Make crosses for the next generation
     next_generation = AlphaSimR::randCross(pop = selected_inds, nCrosses = nCross, nProgeny = nProgenyPerCross, simParam = SP_object)
