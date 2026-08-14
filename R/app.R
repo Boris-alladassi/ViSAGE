@@ -232,6 +232,7 @@ run_visage <- function() {
                                                                            shiny::selectInput("gwasdtchoice", label = "How would you like to run GWAS?",
                                                                                               choices = c("Using simulated data", "Using my own data"),
                                                                                               selected = "Using simulated data"),
+                                                                           ### The user chooses to analyze simulated data
                                                                            shiny::conditionalPanel(
                                                                              condition = "input.gwasdtchoice == 'Using simulated data'",
                                                                              shiny::uiOutput("gwasseltype"),
@@ -239,6 +240,7 @@ run_visage <- function() {
                                                                              shiny::radioButtons(inputId = "keepqtnsgwas", label = "Include simulated QTNs in the analysis?",
                                                                                                  choices = c("Include QTNs" = "yes", "Exclude QTNs" = "no"))
                                                                              ), #End of simulated data conditional panel
+                                                                           ### The user chooses to analyze external data
                                                                            shiny::conditionalPanel(
                                                                              condition = "input.gwasdtchoice == 'Using my own data'",
                                                                              shiny::fileInput(inputId = "phenodtgwas",
@@ -247,6 +249,8 @@ run_visage <- function() {
                                                                                                                                      style = "color:#0072B2;",
                                                                                                                                      title = "Further information ")),
                                                                                               accept = c(".csv", ".txt")),
+
+                                                                             shiny::uiOutput("gwaschoosetrait", label = "Select the trait shiny::column"),
                                                                              shiny::fileInput(inputId = "gwashapmap",
                                                                                               label = shiny::tags$span("Upload genomic data (HapMap)",
                                                                                                                        shiny::tags$i(class = "glyphicon glyphicon-info-sign",
@@ -276,10 +280,8 @@ run_visage <- function() {
                                                                                                                                      )),
                                                                                               accept = c(".csv", ".txt")),
 
-                                                                             shiny::fileInput("kmatrix", "Upload kinship K matrix"),
-                                                                             shiny::selectInput("alltrait", label = "Analyze all the traits?", choices = c("No", "Yes"))
+                                                                             shiny::fileInput("kmatrix", "Upload kinship K matrix")
                                                                            ), #End of conditional panel for using own data
-                                                                           shiny::uiOutput("gwaschoosetrait", label = "Select the trait shiny::column"),
                                                                            shiny::selectInput("gwasmodel", label = "Select one GWAS model", choices = c("GLM", "MLM"), selected = "MLM"),
                                                                            shiny::numericInput("numpcs", "Enter number of PCA axes", value = 3, min = 1),
                                                                            shiny::actionButton(inputId = "rungwas", "Run GWAS", class = "btn btn-success")),
@@ -1187,6 +1189,22 @@ run_visage <- function() {
       }
     })
 
+    gwas_snp_hapmap <- shiny::reactive({
+      if(input$gwasdtchoice == "Using simulated data"){
+        NULL
+
+      }else if(input$gwasdtchoice == "Using my own data"){
+        shiny::req(input$gwashapmap)
+        file <- input$gwashapmap
+        if(is.null(file)){return(NULL)}
+        ext <- tools::file_ext(file$name)
+        switch(ext,
+               "csv" = utils::read.csv(file$datapath, header = TRUE),
+               "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
+               NULL)
+      }
+    })
+
     gwas_map <- shiny::reactive({
       if(input$gwasdtchoice == "Using simulated data"){
         shiny::req(simparms(), base_pop())
@@ -1219,12 +1237,12 @@ run_visage <- function() {
         # shiny::req(gp_sim_dt())
         # gp_sim_dt()$pheno_data
       }else if(input$gwasdtchoice == "Using my own data"){
-        # shiny::req(input$phenodtgwas)
+        shiny::req(input$phenodtgwas)
         file <- input$phenodtgwas
         if(is.null(file)){return(NULL)}
 
         ext <- tools::file_ext(file$name)
-        switch (object,
+        switch (ext,
                 "csv" = utils::read.csv(file$datapath, header = TRUE),
                 "txt" = utils::read.table(file$datapath, header = T, sep = "\t"),
                 NULL)
@@ -1236,18 +1254,8 @@ run_visage <- function() {
     output$gwaschoosetrait <- shiny::renderUI({
       shiny::req(gwas_pheno())
       trait_choices <- names(gwas_pheno())[-1]
-      shiny::selectInput("gwaschoosetrait", label = "Select a trait", choices = trait_choices)
+      shiny::selectInput("input_gwaschoosetrait", label = "Select a trait", choices = trait_choices)
     })
-
-    # output$gwassnpdata <- DT::renderDT({
-    #   shiny::req(gwas_snp())
-    #   if(nrow(gwas_snp()) > 50){
-    #     gwas_snp()[1:50, 1:10]
-    #   }else{
-    #     gwas_snp()[, 1:10]
-    #   }
-    #
-    # })
 
     output$gwassnppca <- shiny::renderPlot({
       shiny::req(gwas_snp())
@@ -1260,9 +1268,9 @@ run_visage <- function() {
 
 
     output$gwashistplot<- shiny::renderPlot({
-      shiny::req(gwas_pheno(), input$gwaschoosetrait)
-      graphics::hist(gwas_pheno()[[input$gwaschoosetrait]], main = "",
-                     xlab = input$gwaschoosetrait, col = "#0455A4", border = "white")
+      shiny::req(gwas_pheno(), input$input_gwaschoosetrait)
+      graphics::hist(gwas_pheno()[[input$input_gwaschoosetrait]], main = "",
+                     xlab = input$input_gwaschoosetrait, col = "#0455A4", border = "white")
     })
 
     gwas_model <- shiny::reactive({
@@ -1275,11 +1283,12 @@ run_visage <- function() {
     gwas_out <- shiny::eventReactive(input$rungwas,{
       shiny::req(gwas_pheno(), gwas_model())
       model_inputs <- gwas_model()
+      pheno_ind <- c(1, which(colnames(gwas_pheno()) == input$input_gwaschoosetrait))
       shiny::withProgress(message = "GWAS analysis is running ...", value = 0, {
-        GAPIT(Y = gwas_pheno(),
+        GAPIT(Y = gwas_pheno()[,pheno_ind],
               GD = gwas_snp(),
               GM = gwas_map(),
-              # G = ,
+              # G = gwas_snp_hapmap(),
               group.from = model_inputs$grp_from,
               group.to = model_inputs$grp_to,
               group.by = model_inputs$grp_by,
@@ -1315,10 +1324,33 @@ run_visage <- function() {
       format_gapit_results(data = as.data.frame(gwas_out()$GWAS), package = "qqman")
     })
 
+    # output$manhattanplot <- shiny::renderPlot({
+    #   shiny::req(gwas_formatted(), base_pop())
+    #   gwas_final <- gwas_formatted()
+    #   qqman::manhattan(x= gwas_final, #col = c("#0455A4", "#FF5F05"),
+    #                    highlight = unlist(base_pop()[[3]]),
+    #                    suggestiveline = F, #bh_threshold(gwas_final$P), #Benjamini-Hoschberg FDR, blue line
+    #                    genomewideline = F) ## -log10(0.05/nrow(gwas_final))Bonferroni correction, red line
+    # })
+
     output$manhattanplot <- shiny::renderPlot({
-      shiny::req(gwas_formatted(), base_pop())
-      qqman::manhattan(x= gwas_formatted(), #col = c("#0455A4", "#FF5F05"),
-                       highlight = unlist(base_pop()[[3]]))
+
+      if(input$gwasdtchoice == "Using simulated data"){
+        shiny::req(gwas_formatted(), base_pop())
+        gwas_final <- gwas_formatted()
+        manhattan_plot(df = gwas_final,
+                       highlight = unlist(base_pop()[[3]]),
+                       bon_threshold = -log10(0.05/nrow(gwas_final)),
+                       bh_threshold = bh_threshold(gwas_final$P)
+        )
+      }else if(input$gwasdtchoice == "Using my own data"){
+        shiny::req(gwas_formatted())
+        gwas_final <- gwas_formatted()
+        manhattan_plot(df = gwas_final,
+                       bon_threshold = -log10(0.05/nrow(gwas_final)),
+                       bh_threshold = bh_threshold(gwas_final$P)
+        )
+      }
     })
 
     ### Creating the Q-Q plot

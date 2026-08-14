@@ -430,7 +430,7 @@ plot_pca_biplot <- function(pop = NULL, geno = NULL){
   }
 
   monomorphics <- find_constant_cols(df = as.data.frame(geno_mat))
-  # print(paste0("There were", length(monomorphics), "markers found."))
+  print(paste0("There were ", length(monomorphics), "monomorphic markers found."))
 
   ## Exclude the monomorphics
   if(length(monomorphics) > 0){
@@ -439,7 +439,12 @@ plot_pca_biplot <- function(pop = NULL, geno = NULL){
   }
 
   ## Now run PCA analysis
-  pca_res <- stats::prcomp(geno_mat, center = T, scale. = T)
+  geno_mat <- as.matrix(geno_mat)
+
+  ###Impute missing data with heterozygotes
+  geno_mat[is.na(geno_mat)] <- 1
+
+  pca_res <- stats::prcomp(geno_mat)
   pca_var <- (summary(pca_res)$importance)[2,1:2]
   num_axis <- ifelse(length(pca_res$sdev) > 10, 10, length(pca_res$sdev))
   pca_var_df <- as.data.frame(t(100*(summary(pca_res)$importance)[2:3,1:num_axis])) |>
@@ -462,7 +467,7 @@ plot_pca_biplot <- function(pop = NULL, geno = NULL){
     ggplot2::scale_x_continuous(breaks = 1:num_axis, labels = paste0("PC", 1:num_axis)) +
     # ggplot2::scale_y_continuous(limits = c(0,100) ,breaks = seq(0,100,20)) +
     ggplot2::scale_color_manual(values = c("Proportion" = "darkblue", "Cumulative" = "darkred"))+
-    boris_theme() + ggplot2::theme(legend.position = c(0.3, 0.8),
+    boris_theme() + ggplot2::theme(legend.position = c(0.7, 0.3),
                                    axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
 
   out_list <- list(biplt = biplt, screeplt = screeplt)

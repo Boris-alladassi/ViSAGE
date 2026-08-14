@@ -54,10 +54,7 @@ format_gapit_results <- function(data, package) {
   if (package == "qqman") {
 
     data <- data |>
-      dplyr::rename(CHR = Chromosome, BP = Position, P = P.value) |>
-      dplyr::mutate(
-        CHR = as.numeric(stringr::str_sub(stringr::word(SNP, 1, sep = "_")), 2)
-        )
+      dplyr::rename(CHR = Chromosome, BP = Position, P = P.value)
 
   } else if (package == "ggman") {
 
@@ -211,6 +208,16 @@ mt.rawp2adjp<-function(rawp,proc=c("Bonferroni","Holm","Hochberg","SidakSS","Sid
   list(adjp=adjp,index=index,h0.ABH=h0.ABH[1],h0.TSBH=h0.TSBH[1:length(alpha)])
 }
 
+bh_threshold <- function(pvalues, alpha = 0.05) {
+  p <- sort(na.omit(pvalues))
+  m <- length(p)
+
+  k <- max(c(0, which(p <= (1:m) / m * alpha)))
+
+  if (k == 0) return(NA)
+  -log10(p[k])
+}
+
 ###########################################################################
 ### A function for selection of GLM or MLM in classical GAPIT code
 model_selection <- function(data, model = "GLM"){
@@ -226,4 +233,172 @@ model_selection <- function(data, model = "GLM"){
   }
   out <- list(grp_from = grp_from, grp_to = grp_to, grp_by = grp_by)
   return(out)
+}
+
+
+########## A function to plot Manhattan plot ---------- #####################
+manhattan_plot <- function(df, bh_threshold = NULL,
+                           bon_threshold = NULL, highlight = NULL) {
+
+  # Check required columns
+  required_cols <- c("CHR", "BP", "P", "SNP")
+
+  if (!all(required_cols %in% names(df))) {
+    stop(
+      "The dataframe must contain the following columns: ",
+      paste(required_cols, collapse = ", ")
+    )
+  }
+
+  # Check numeric columns
+  if (!is.numeric(df$BP)) {
+    stop("BP must be numeric.")
+  }
+
+  if (!is.numeric(df$P)) {
+    stop("P must be numeric.")
+  }
+
+  # Check P-values
+  if (any(df$P <= 0 | df$P > 1, na.rm = TRUE)) {
+    stop("P must contain values greater than 0 and less than or equal to 1.")
+  }
+
+  # Prepare data
+  dt <- df |>
+    dplyr::mutate(
+      CHR = as.character(CHR),
+      chr_num = as.numeric(CHR)
+    ) |>
+    dplyr::arrange(chr_num, BP)
+
+  # Calculate chromosome lengths and cumulative positions
+  chr_info <- dt |>
+    dplyr::group_by(CHR, chr_num) |>
+    dplyr::summarise(
+      chr_length = max(BP, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(chr_num) |>
+    dplyr::mutate(
+      chr_offset = dplyr::lag(
+        cumsum(chr_length),
+        default = 0
+      )
+    )
+
+  # Add cumulative genomic position
+  dt <- dt |>
+    dplyr::left_join(
+      chr_info |>
+        dplyr::select(CHR, chr_num, chr_offset),
+      by = c("CHR", "chr_num")
+    ) |>
+    dplyr::mutate(
+      pos_cum = BP + chr_offset
+    )
+
+  # Chromosome centers for x-axis labels
+  centers <- dt |>
+    dplyr::group_by(CHR, chr_num) |>
+    dplyr::summarise(
+      center = mean(range(pos_cum, na.rm = TRUE)),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(chr_num)
+
+  # Select highlighted SNPs
+  if (!is.null(highlight)) {
+
+    dt_highlight <- dt |>
+      dplyr::filter(SNP %in% highlight)
+
+  } else {
+
+    dt_highlight <- dt |>
+      dplyr::filter(FALSE)
+  }
+
+  # Number of colors needed for alternating chromosomes
+  num_color <- ceiling(
+    length(unique(dt$CHR)) / 2
+  )
+
+  # Base Manhattan plot
+  manhplot <- ggplot2::ggplot(
+    dt,
+    ggplot2::aes(
+      x = pos_cum,
+      y = -log10(P)
+    )
+  ) +
+
+    ggplot2::geom_point(
+      ggplot2::aes(color = CHR),
+      shape = 19
+    ) +
+
+    ggplot2::scale_color_manual(
+      values = rep(
+        c("grey20", "grey80"),
+        num_color
+      ),
+      guide = "none"
+    )
+
+  # Add Bonferroni threshold
+  if (!is.null(bon_threshold)) {
+
+    manhplot <- manhplot +
+      ggplot2::geom_hline(
+        yintercept = bon_threshold,
+        color = "darkred",
+        linewidth = 1
+
+      )
+  }
+
+  # Add BH threshold
+  if (!is.null(bh_threshold)) {
+
+    manhplot <- manhplot +
+      ggplot2::geom_hline(
+        yintercept = bh_threshold,
+        color = "darkblue",
+        linewidth = 1
+      )
+  }
+
+  # Highlight selected SNPs
+  if (nrow(dt_highlight) > 0) {
+
+    manhplot <- manhplot +
+
+      ggnewscale::new_scale_color() +
+
+      ggplot2::geom_point(
+        data = dt_highlight,
+        ggplot2::aes(
+          x = pos_cum,
+          y = -log10(P),
+          color = "highlight"
+        ),
+        shape = 19
+      ) +
+
+      ggplot2::scale_color_manual(
+        values = c(highlight = "green1"),
+        guide = "none"
+      )
+  }
+
+  # Final plot formatting
+  manhplot <- manhplot +
+    ggplot2::scale_x_continuous(breaks = centers$center,labels = centers$CHR,
+                                expand = ggplot2::expansion(mult = c(0.01, 0.01))) +
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.05))) +
+    ggplot2::labs(x = "Chromosome", y = expression(bold(-log[10](P)))) +
+    boris_theme()
+
+  return(manhplot)
 }
