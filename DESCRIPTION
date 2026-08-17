@@ -19,7 +19,7 @@ Description: Simulation and analysis of quantitative traits within breeding popu
     1. Simulate quantitative traits with additive, dominance, and epistasis architectures.
     2. Conduct multi-generation selection using either a directional, stabilizing or diruptive selection type.
     3. Conduct genome-wide association studies (GWAS) and genome-wide prediction analyses.
-License: MIT + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Imports: 
