@@ -1182,10 +1182,7 @@ run_visage <- function() {
         file <- input$genodtgwas
         if(is.null(file)){return(NULL)}
         ext <- tools::file_ext(file$name)
-        switch(ext,
-               "csv" = utils::read.csv(file$datapath, header = TRUE),
-               "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
-               NULL)
+        data.table::fread(file$datapath)
       }
     })
 
@@ -1198,10 +1195,7 @@ run_visage <- function() {
         file <- input$gwashapmap
         if(is.null(file)){return(NULL)}
         ext <- tools::file_ext(file$name)
-        switch(ext,
-               "csv" = utils::read.csv(file$datapath, header = TRUE),
-               "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
-               NULL)
+        data.table::fread(file$datapath)
       }
     })
 
@@ -1221,10 +1215,7 @@ run_visage <- function() {
         file <- input$genomapgwas
         if(is.null(file)){return(NULL)}
         ext <- tools::file_ext(file$name)
-        switch(ext,
-               "csv" = utils::read.csv(file$datapath, header = TRUE),
-               "txt" = utils::read.table(file$datapath, header = TRUE, sep = "\t"),
-               NULL)
+        data.table::fread(file$datapath)
       }
 
     })
@@ -1242,10 +1233,7 @@ run_visage <- function() {
         if(is.null(file)){return(NULL)}
 
         ext <- tools::file_ext(file$name)
-        switch (ext,
-                "csv" = utils::read.csv(file$datapath, header = TRUE),
-                "txt" = utils::read.table(file$datapath, header = T, sep = "\t"),
-                NULL)
+        data.table::fread(file$datapath)
       }
 
     })
@@ -1438,7 +1426,7 @@ run_visage <- function() {
         # gp_sim_dt()$snp_data
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$traingenodtgp)
-        utils::read.csv(input$traingenodtgp$datapath, header = TRUE)}
+        data.table::fread(input$traingenodtgp$datapath)}
     })
 
     tpheno_reactive <- shiny::reactive({
@@ -1450,7 +1438,7 @@ run_visage <- function() {
         # gp_sim_dt()$pheno_data
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$phenodtgp)
-        utils::read.csv(input$phenodtgp$datapath, header = TRUE)
+        data.table::fread(input$phenodtgp$datapath, header = TRUE)
       }
 
     })
@@ -1568,7 +1556,7 @@ run_visage <- function() {
 
       }else if(input$gpdtchoice == "Using my own data"){
         shiny::req(input$testgenodtgp)
-        utils::read.csv(input$testgenodtgp$datapath, header = TRUE)
+        data.table::fread(input$testgenodtgp$datapath, header = TRUE)
       }
 
     })

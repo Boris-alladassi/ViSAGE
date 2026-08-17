@@ -423,7 +423,7 @@ plot_pca_biplot <- function(pop = NULL, geno = NULL){
 
   # Find monomorphic markers
   find_constant_cols <- function(df, values = c(0, 1, 2)) {
-    names(df)[sapply(df, function(x) {
+    colnames(df)[sapply(df, function(x) {
       ux <- unique(na.omit(x))
       length(ux) == 1 && ux %in% values
     })]
