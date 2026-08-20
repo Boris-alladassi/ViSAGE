@@ -376,8 +376,8 @@ run_visage <- function() {
 
                                                                            ), #End of simulated data conditional panel
                                                                            shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data'",
-                                                                                                   shiny::fileInput("phenodtgp", "Upload phenotypic data"),
-                                                                                                   shiny::fileInput("traingenodtgp", "Upload genomic data")
+                                                                                                   shiny::fileInput("phenodtgp", "Upload phenotypic data for training set"),
+                                                                                                   shiny::fileInput("traingenodtgp", "Upload genomic data for training set")
                                                                            ), #End of conditional panel for using own data
 
                                                                            shiny::uiOutput("choosetrait"),
@@ -396,7 +396,7 @@ run_visage <- function() {
                                                                                                                            shiny::uiOutput("gpgeneration2")),
 
                                                                                                    shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data'",
-                                                                                                                           shiny::fileInput("testgenodtgp", "Upload genomic data")),
+                                                                                                                           shiny::fileInput("testgenodtgp", "Upload genomic data for prediction set")),
 
                                                                                                    shiny::selectInput(inputId = "GSselType", label = "Choose a selection type you wish to apply to the GEBVs",
                                                                                                                       choices = c("Directional_higher", "Directional_lower",
@@ -1367,11 +1367,13 @@ run_visage <- function() {
         paste0("Manhattan_plot_", Sys.Date(), ".jpeg")
       },
       content = function(file){
-        shiny::req(gwas_formatted(), base_pop())
-        grDevices::jpeg(file, width = 8, height = 4, res = 300, units = "in")
-        qqman::manhattan(x= gwas_formatted(), #col = c("#0455A4", "#FF5F05"),
-                         highlight = unlist(base_pop()[[3]]))
-        grDevices::dev.off()
+        shiny::req(output$manhattanplot())
+        # grDevices::jpeg(file, width = 8, height = 4, res = 300, units = "in")
+        # qqman::manhattan(x= gwas_formatted(), #col = c("#0455A4", "#FF5F05"),
+        #                  highlight = unlist(base_pop()[[3]]))
+        # grDevices::dev.off()
+        ggplot2::ggsave(filename = file, width = 8, height = 4,
+                        plot = output$manhattanplot(),  dpi = 300)
       }
     )
     ## Download Q-Q plot
