@@ -1,7 +1,7 @@
 
-#' Launch the ViSAGE R Shiny app
+#' Launch the VISAGE R Shiny app
 #'
-#' @description The `run_visage()` function launches the ViSAGE R Shiny app.
+#' @description The `run_visage()` function launches the VISAGE R Shiny app.
 #' The app is designed to simulate and visualize various genetic
 #' architectures and selection schemes in breeding populations.
 #' The app provides an interactive interface for users to
@@ -15,7 +15,7 @@
 run_visage <- function() {
   shiny::addResourcePath(
     prefix = "www",
-    directoryPath = system.file("app/www", package = "ViSAGE")
+    directoryPath = system.file("app/www", package = "VISAGE")
   )
   options(shiny.maxRequestSize = 100 * 1024^2)  # 100 MB
 
@@ -30,7 +30,7 @@ run_visage <- function() {
     ),
 
     shiny::tags$head(
-      shiny::includeCSS(system.file("app/www/custom_modals.css", package = "ViSAGE"))
+      shiny::includeCSS(system.file("app/www/custom_modals.css", package = "VISAGE"))
     ),
 
     theme = bslib::bs_theme(bootswatch = "united"),
