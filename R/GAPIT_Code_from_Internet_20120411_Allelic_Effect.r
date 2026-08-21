@@ -37,8 +37,8 @@ myGenotype<-GAPIT.Genotype(G=G,GD=GD,GM=GM,KI=KI,kinship.algorithm=kinship.algor
 Timmer=myGenotype$Timmer
 Memory=myGenotype$Memory
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype for all")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype for all")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype for all")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype for all")
 
 
 KI=myGenotype$KI
@@ -219,8 +219,8 @@ if(QC)
 rm(qc)
 gc()
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="QC")
-Memory=GAPIT.Memory(Memory=Memory,Infor="QC")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="QC")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="QC")
 
 
 byPass.top=FALSE
@@ -264,8 +264,8 @@ print("-------------------Sagnwich topp bun: done-----------------------------")
 
 }
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="SagnwichTop")
-Memory=GAPIT.Memory(Memory=Memory,Infor="SagnwichTop")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="SagnwichTop")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="SagnwichTop")
 
 #Sandwich burger and dressing
 print("-------------------Sandwich burger and dressing------------------------")
@@ -328,8 +328,8 @@ colnames(Compression)=c("Type","Cluster","Group","REML","VA","VE")
 if(min(X0[,1])!=max(X0[,1])) X0 <- cbind(1, X0) #do not add overall mean if X0 has it already at first column
 
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="DataProcessing")
-Memory=GAPIT.Memory(Memory=Memory,Infor="DataProcessing")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="DataProcessing")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="DataProcessing")
 
 print("-------------------------Iteration in process--------------------------")
 print(paste("Total iterations: ",numSetting,sep=""))
@@ -380,8 +380,8 @@ if(optOnly | Model.selection){
 if(!optOnly) print("Compressing and Genome screening..." )
 count=count+1
 
-#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 1")
-#Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 1")
+##Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 1")
+##Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 1")
 
 if(!byPass)
 {
@@ -393,20 +393,20 @@ cp <- GAPIT.Compress(KI=KI,kinship.cluster=ca,kinship.group=kt,GN=group,Timmer=T
 Timmer=cp$Timmer
 Memory=cp$Memory
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
-Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
 
 #print("BK...")
 bk <- GAPIT.Block(Z=Z,GA=cp$GA,KG=cp$KG)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
-Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 bk")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 bk")
 
 #print("ZC...")
 zc <- GAPIT.ZmatrixCompress(Z=Z,GAU =bk$GA)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_zc")
-Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 zc")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_zc")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 zc")
 
 #print("wraping...")
 #Reform KW and Z into EMMA format
@@ -415,8 +415,8 @@ zrow=nrow(zc$Z)
 zcol=ncol(zc$Z)-1
 #Z1=matrix(as.numeric(as.matrix(zc$Z[,-1])),nrow=zrow,ncol=zcol)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Prio PreP3D")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Prio PreP3D")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Prio PreP3D")
 
 #Evaluating maximum likelohood
 #print("Calling EMMAxP3D...")
@@ -432,8 +432,8 @@ p3d <- GAPIT.EMMAxP3D(ys=ys,xs=as.matrix(as.data.frame(GD[GTindex,colInclude])),
 Timmer=p3d$Timmer
 Memory=p3d$Memory
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Post PreP3D")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Post PreP3D")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Post PreP3D")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Post PreP3D")
 
 #print("Cluster algorithm, kinship type, groups, VG, Ve and REML:")
 print(paste(count, "of",numSetting,"--","Vg=",round(p3d$vgs,4), "VE=",round(p3d$ves,4),"-2LL=",round(p3d$REMLs,2), "  Clustering=",ca,"  Group number=", group ,"  Group kinship=",kt,sep = " "))
@@ -486,8 +486,8 @@ if(!is.null(GP))
   Timmer=myGenotype$Timmer
   Memory=myGenotype$Memory
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype for burger")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype for burger")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype for burger")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype for burger")
 
   #print("Extracting QTNs...")
   #SNP.QTN=myGenotype$SNP.QTN
@@ -572,17 +572,17 @@ if(Model.selection == TRUE){
   Timmer=cp$Timmer
   Memory=cp$Memory
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
 
   bk <- GAPIT.Block(Z=Z,GA=cp$GA,KG=cp$KG)
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 bk")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 bk")
 
   zc <- GAPIT.ZmatrixCompress(Z=Z,GAU =bk$GA)
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_zc")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 zc")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_zc")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 zc")
 
   z0=as.matrix(zc$Z[,-1])
   Z1=matrix(as.numeric(z0),nrow=nrow(z0),ncol=ncol(z0))
@@ -663,13 +663,13 @@ print("---------------------Sandwich bottom bun-------------------------------")
 print("Compression")
 print(Compression)
 
-#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Compression")
-#Memory=GAPIT.Memory(Memory=Memory,Infor="Copmression")
+##Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Compression")
+##Memory=GAPIT.Memory(Memory=Memory,Infor="Copmression")
 
 if(numSetting==1)
 {
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")
 }
 
 #Perform GWAS with the optimum setting
@@ -711,17 +711,17 @@ print("--------------  Sandwich bottom with raw burger------------------------")
   Timmer=cp$Timmer
   Memory=cp$Memory
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_cp")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2_cp")
 
   bk <- GAPIT.Block(Z=Z,GA=cp$GA,KG=cp$KG)
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 bk")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_bk")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 bk")
 
   zc <- GAPIT.ZmatrixCompress(Z=Z,GAU =bk$GA)
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_zc")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 zc")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PreP3D 2_zc")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="PreP3D 2 zc")
 
   #Reform KW and Z into EMMA format
 
@@ -735,8 +735,8 @@ print("--------------  Sandwich bottom with raw burger------------------------")
     			 file.path=file.path,file.from=file.from,file.to=file.to,file.total=file.total, file.fragment = file.fragment, byFile=byFile, file.G=file.G,file.Ext.G=file.Ext.G,file.GD=file.GD, file.GM=file.GM, file.Ext.GD=file.Ext.GD,file.Ext.GM=file.Ext.GM,
            GTindex=GTindex,genoFormat=genoFormat,optOnly=optOnly,SNP.effect=SNP.effect,SNP.impute=SNP.impute,name.of.trait=name.of.trait)
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")
  print("--------------EMMAxP3D with the optimum setting done------------------")
 
 }#end of if(!byPass)
@@ -755,8 +755,8 @@ print("---------------Sandwich bottom: reload bins ---------------------------")
 
   print("SUPER saving results...")
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS")
 
 
 }   #end of if(byPass)
@@ -881,8 +881,8 @@ GPS=NULL
 rm(zc)
 gc()
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Final")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Final")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Final")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Final")
 
 #genomic prediction
 print("Genomic Breeding Values (GBV) ..." )
@@ -898,8 +898,8 @@ print("Writing GBV and Acc..." )
 GPS=NULL
 if(length(bk$KW)>ncol(X0)) GPS=gs$BLUP
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GPS")
-Memory=GAPIT.Memory(Memory=Memory,Infor="GPS")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GPS")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="GPS")
 
 #Make heatmap for distribution of BLUP and PEV
 print("GBV and accuracy distribution..." )
@@ -913,8 +913,8 @@ print("Compression portfolios..." )
 if(file.output) GAPIT.Compression.Visualization(Compression = Compression, name.of.trait = name.of.trait)
 print("Compression Visualization done")
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Compression.Visualization")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Compression.Visualization")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Compression.Visualization")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Compression.Visualization")
 
 ps=p3d$ps
 nobs=p3d$nobs
@@ -924,8 +924,8 @@ rsquare=p3d$rsquare
 effect.est=p3d$effect.est
 
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract p3d results")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
 
 }else{
   GPS=myBread$BLUP
@@ -933,8 +933,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract p3d results")
   nobs=myBread$GWAS[,6]
   maf=myBread$GWAS[,4]*0+.5
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract bread results")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract bread results")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Extract bread results")
 
 
 }
@@ -974,8 +974,8 @@ print("debug end1")
 #Export GWAS results
 if(hasGenotype &SNP.test &!is.na(Compression[1,4]))     #require not NA REML
 {
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract GWAS start")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS start")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract GWAS start")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS start")
 
 
   print("Filtering SNPs with MAF..." )
@@ -983,8 +983,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS start")
 	PWI.Filtered=cbind(GI,ps,maf,nobs,rsquare_base,rsquare,effect.est)[index,]
 	colnames(PWI.Filtered)=c("SNP","Chromosome","Position ","P.value", "maf", "nobs", "Rsquare.without.SNP","Rsquare.with.SNP", "Effect.Est")
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="MAF filtered")
-Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="MAF filtered")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
 
   print("SNPs filtered with MAF")
 
@@ -996,16 +996,16 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="MAF filtered")
   print("Calculating FDR..." )
   PWIP <- GAPIT.Perform.BH.FDR.Multiple.Correction.Procedure(PWI = PWI.Filtered, FDR.Rate = FDR.Rate, FDR.Procedure = "BH")
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Multiple Correction")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Multiple Correction")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Multiple Correction")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Multiple Correction")
 
 
   #QQ plots
   print("QQ plot..." )
   if(file.output) GAPIT.QQ(P.values = PWIP$PWIP[,4], name.of.trait = name.of.trait,DPP=DPP)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="QQ plot")
-Memory=GAPIT.Memory(Memory=Memory,Infor="QQ plot")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="QQ plot")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="QQ plot")
 
 
   #Manhattan Plots
@@ -1014,8 +1014,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="QQ plot")
  print("Manhattan plot (Chromosomewise)..." )
   if(file.output) GAPIT.Manhattan(GI.MP = PWIP$PWIP[,2:4], name.of.trait = name.of.trait, DPP=DPP, plot.type = "Chromosomewise",cutOff=cutOff)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Manhattan plot")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Manhattan plot")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Manhattan plot")
 
 
   #Association Table
@@ -1035,8 +1035,8 @@ print("debug end 2")
 
 
   } #end of if(!is.null(PWI.Filtered))
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract GWAS end")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS end")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Extract GWAS end")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Extract GWAS end")
 
 
 } #end of if(hasGenotype )
@@ -1049,8 +1049,8 @@ if(file.output) log=GAPIT.Log(Y=Y,KI=KI,Z=Z,CV=CV,SNP.P3D=SNP.P3D,
 #GAPIT.Memory.Object(name.of.trait=name.of.trait)
 
 #Timming
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Report")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Report")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Report")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Report")
 if(file.output){
 file=paste("GAPIT.", name.of.trait,".Timming.csv" ,sep = "")
 utils::write.table(Timmer, file, quote = FALSE, sep = ",", row.names = FALSE,col.names = TRUE)
@@ -1084,8 +1084,8 @@ GAPIT.EMMAxP3D <- function(ys,xs,K=NULL,Z=NULL,X0=NULL,GI=NULL,GP=NULL,
 ##############################################################################################
 
 #print("EMMAxP3D started...")
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="P3D Start")
-Memory=GAPIT.Memory(Memory=Memory,Infor="P3D Start")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="P3D Start")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="P3D Start")
 
 
 #--------------------------------------------------------------------------------------------------------------------<
@@ -1114,8 +1114,8 @@ if(!is.null(K)) tv=ncol(K)
 #print("Caling emma.eigen.L...")
 if(!is.null(K)) eig.L <- emma.eigen.L(Z, K) #this function handle both NULL Z and non-NULL Z matrix
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
-Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L")
 
 #print("debuge")
 #print(labels(eig.L))
@@ -1131,8 +1131,8 @@ X <-  X0 #covariate variables such as population structure
 if(!is.null(Z) & !is.null(K)) eig.R <- try(emma.eigen.R.w.Z(Z, K, X)) #This will be used to get REstricted ML (REML)
 if(is.null(Z)  & !is.null(K)) eig.R <- try(emma.eigen.R.wo.Z(   K, X)) #This will be used to get REstricted ML (REML)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R")
-Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R")
 
 #print("emma.eigen.R.w.Z called!!!")
 #Handler of error in emma
@@ -1162,13 +1162,13 @@ if(optOnly){
  if(!is.null(K)){
   REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
 
   rm(eig.R)
   gc()
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R removed")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R removed")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R removed")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R removed")
 
   vgs <- REMLE$vg
   ves <- REMLE$ve
@@ -1252,19 +1252,19 @@ if(optOnly){
 
 
 #--------------------------------------------------------------------------------------------------------------------<
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Trait")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Trait")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Trait")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Trait")
 
 if(!is.null(K)){
   REMLE <- emma.REMLE(ys[j,], X, K, Z, ngrids, llim, ulim, esp, eig.R)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
-Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REML")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="REML")
 
 rm(eig.R)
 gc()
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R removed")
-Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R removed")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.R removed")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R removed")
 
   vgs <- REMLE$vg
   ves <- REMLE$ve
@@ -1274,8 +1274,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="eig.R removed")
 rm(REMLE)
 gc()
 }
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REMLE removed")
-Memory=GAPIT.Memory(Memory=Memory,Infor="REMLE removed")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="REMLE removed")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="REMLE removed")
 
 if(!is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(c(sqrt(1/(eig.L$values + REMLE_delta)),rep(sqrt(1/REMLE_delta),nr - tv)),nr,((nr-tv)+length(eig.L$values)),byrow=TRUE)
 if( is.null(Z) & !is.null(K))  U <- eig.L$vectors * matrix(  sqrt(1/(eig.L$values + REMLE_delta)),nr,length(eig.L$values),byrow=TRUE)
@@ -1285,14 +1285,14 @@ if( is.null(Z) & !is.null(K))  eig.full.plus.delta <- as.matrix((eig.L$values + 
 
 
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="U Matrix")
-Memory=GAPIT.Memory(Memory=Memory,Infor="U Matrix")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="U Matrix")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="U Matrix")
 
 rm(eig.L)
 gc()
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L removed")
-Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L removed")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="eig.L removed")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="eig.L removed")
 
 #-------------------------------------------------------------------------------------------------------------------->
 
@@ -1305,8 +1305,8 @@ if(!fullGD & !optOnly) print("Screening SNPs from file...")
 #Add loop for genotype data files
 for (file in file.from:file.stop)
 {
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="New Genotype file")
-Memory=GAPIT.Memory(Memory=Memory,Infor="New Genotype file")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="New Genotype file")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="New Genotype file")
 
 
 
@@ -1334,8 +1334,8 @@ while(numSNP==file.fragment) {     #this is problematic if the read end at the l
   if(!fullGD & !optOnly & !firstFileFirstFrag )
   {
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Clean myFRG")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Clean myFRG")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Clean myFRG")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Clean myFRG")
 
 #update xs for each file
     rm(xs)
@@ -1343,15 +1343,15 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Clean myFRG")
     gc()
     print(paste("Current file: ",file," , Fragment: ",frag,sep=""))
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Read file fragment")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Read file fragment")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Read file fragment")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Read file fragment")
 
     myFRG=GAPIT.Fragment( file.path=file.path,  file.total=file.total,file.G=file.G,file.Ext.G=file.Ext.G,
                           seed=seed,SNP.fraction=SNP.fraction,SNP.effect=SNP.effect,SNP.impute=SNP.impute,genoFormat=genoFormat,
                           file.GD=file.GD,file.Ext.GD=file.Ext.GD,file.GM=file.GM,file.Ext.GM=file.Ext.GM,file.fragment=file.fragment,file=file,frag=frag)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype file converted")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype file converted")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype file converted")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype file converted")
 
 #print("-----------------------------------------------------------------")
 
@@ -1388,8 +1388,8 @@ if(!is.null(xs))  {
   m <- ncol(xs) #number of SNPs
   t <- nrow(xs) #number of individuals
 
-# Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before cleaning")
-# Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
+# #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before cleaning")
+# #Memory=GAPIT.Memory(Memory=Memory,Infor="Before cleaning")
   #allocate spaces for SNPs
   # rm(dfs)
   # rm(stats)
@@ -1401,8 +1401,8 @@ if(!is.null(xs))  {
   # rm(rsquare)
   gc()
 
-# Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="After cleaning")
-# Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
+# #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="After cleaning")
+# #Memory=GAPIT.Memory(Memory=Memory,Infor="After cleaning")
 
   dfs <- matrix(nrow = m, ncol = g)
   stats <- matrix(nrow = m, ncol = g)
@@ -1413,8 +1413,8 @@ if(!is.null(xs))  {
   rsquare_base <- matrix(nrow = m, ncol = g)
   rsquare <- matrix(nrow = m, ncol = g)
   #print(paste("Memory allocated.",sep=""))
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Memory allocation")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="Memory allocation")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Memory allocation")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="Memory allocation")
 
   if(optOnly)mloop=0
   if(!optOnly)mloop=m
@@ -1592,8 +1592,8 @@ for (i in loopStart:mloop){
          XstX0 <- t(X0Xst)
          xstxst <- crossprod(xst, xst)
          # if(i == 1){
-         #  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_X0Xst_XstX0_xstxst")
-         #  Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_X0Xst_XstX0_xstxst")
+         #  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_X0Xst_XstX0_xstxst")
+         #  #Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_X0Xst_XstX0_xstxst")
          #   }
          #XX <- rbind(cbind(X0X0, X0Xst), cbind(XstX0, xstxst))
 
@@ -1620,8 +1620,8 @@ for (i in loopStart:mloop){
          xsY <- crossprod(xst,yt)
          XY <- c(X0Y,xsY)
 #         if(i == 1){
-#         Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_xsY_X0Y")
-#         Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_xsY_X0Y")
+#         #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_xsY_X0Y")
+#         #Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_xsY_X0Y")
 #         }
         }
         #XY = crossprod(Xt,yt)
@@ -1669,8 +1669,8 @@ for (i in loopStart:mloop){
         iXX[1:q0,q1]=NeginvB22B21
 
         #if(i == 1){
-        # Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_iXX")
-        # Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_iXX")
+        # #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Calculate_iXX")
+        # #Memory=GAPIT.Memory(Memory=Memory,Infor="Calculate_iXX")
         #}
 
       }
@@ -1690,8 +1690,8 @@ for (i in loopStart:mloop){
 #--------------------------------------------------------------------------------------------------------------------<
       if(i ==0 &file==file.from &frag==1 & !is.null(K))
       {
-        Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="ReducedModel")
-	  Memory=GAPIT.Memory(Memory=Memory,Infor="ReducdModel")
+        #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="ReducedModel")
+	  #Memory=GAPIT.Memory(Memory=Memory,Infor="ReducdModel")
 
 
         XtimesBetaHat <- X%*%beta
@@ -1713,12 +1713,12 @@ for (i in loopStart:mloop){
 
 
       #Clean up the BLUP starf to save memory
-      Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="before Dt clean")
-      Memory=GAPIT.Memory(Memory=Memory,Infor="before Dt clean")
-      rm(Dt)
-      gc()
-      Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Dt clean")
-      Memory=GAPIT.Memory(Memory=Memory,Infor="Dt clean")
+      #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="before Dt clean")
+      #Memory=GAPIT.Memory(Memory=Memory,Infor="before Dt clean")
+      # rm(Dt)
+      # gc()
+      #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Dt clean")
+      #Memory=GAPIT.Memory(Memory=Memory,Infor="Dt clean")
 
 
 
@@ -1726,8 +1726,8 @@ for (i in loopStart:mloop){
 
         grand.mean.vector <- rep(beta[1], length(BLUP))
         BLUP_Plus_Mean <- grand.mean.vector + BLUP
-    	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="BLUP")
-        Memory=GAPIT.Memory(Memory=Memory,Infor="BLUP")
+    	  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="BLUP")
+        #Memory=GAPIT.Memory(Memory=Memory,Infor="BLUP")
 
         #PEV
         C11=try(vgs*solve(crossprod(Xt,Xt)))
@@ -1749,8 +1749,8 @@ for (i in loopStart:mloop){
 
         BLUE=X%*%beta
 
-    	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PEV")
-        Memory=GAPIT.Memory(Memory=Memory,Infor="PEV")
+    	  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PEV")
+        #Memory=GAPIT.Memory(Memory=Memory,Infor="PEV")
 
       }#end of if(i ==0&file==file.from   & !is.null(K))
 #-------------------------------------------------------------------------------------------------------------------->
@@ -1776,8 +1776,8 @@ for (i in loopStart:mloop){
 #Clean up the BLUP starf to save memory
 if(i ==0 &file==file.from &frag==1 & !is.null(K))
 {
-    	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K normal")
-        Memory=GAPIT.Memory(Memory=Memory,Infor="K normal")
+    	  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K normal")
+        #Memory=GAPIT.Memory(Memory=Memory,Infor="K normal")
 K=1
 rm(Dt)
 rm(Zt)
@@ -1787,8 +1787,8 @@ rm(C21)
 rm(C22)
 
 gc()
-    	  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K set to 1")
-        Memory=GAPIT.Memory(Memory=Memory,Infor="K set to 1")
+    	  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="K set to 1")
+        #Memory=GAPIT.Memory(Memory=Memory,Infor="K set to 1")
 }
 
       if(i == 0 &file==file.from & frag==1){
@@ -1844,8 +1844,8 @@ gc()
 
 } # End of loop on SNPs
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Screening SNPs")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Screening SNPs")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Screening SNPs")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Screening SNPs")
 
 #output p value for the genotype file
 if(!fullGD)
@@ -1873,8 +1873,8 @@ if(!fullGD)
 } # Ebd of loop on file
 } # End of loop on traits
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
-Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GWAS done for this Trait")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="GWAS done for this Trait")
 
 
 return(list(ps = ps, REMLs = -2*REMLs, stats = stats, effect.est = effect.est, rsquare_base = rsquare_base, rsquare = rsquare, dfs = dfs,maf=maf,nobs = nobs,Timmer=Timmer,Memory=Memory,
@@ -2088,14 +2088,14 @@ GAPIT.Compress <- function(KI,kinship.cluster = "average",kinship.group = "Mean"
 # Last update: April 14, 2011
 ##############################################################################################
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP start")
-Memory=GAPIT.Memory(Memory=Memory,Infor="cp start")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP start")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="cp start")
 
 # Extract the line names
 line.names <- KI[,1]
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Does this change memory0")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Does this change memory0")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Does this change memory0")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Does this change memory0")
 
 # Remove the first column of the kinship matrix, which is the line names
 KI <- KI[ ,-1]
@@ -2107,8 +2107,8 @@ KI <- KI[ ,-1]
 #distance.matrix.stats::as.dist <- stats::as.dist(distance.matrix)
 #distance.matrix.stats::as.dist <- stats::as.dist(2 - KI)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP distance")
-Memory=GAPIT.Memory(Memory=Memory,Infor="cp distance")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP distance")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="cp distance")
 
 #print(paste("The value of kinship.cluster is ", kinship.cluster, sep = ""))
 
@@ -2119,14 +2119,14 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="cp distance")
 cluster.distance.matrix <- stats::hclust(stats::as.dist(2 - KI), method = kinship.cluster)
 
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP cluster")
-Memory=GAPIT.Memory(Memory=Memory,Infor="cp cluster")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP cluster")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="cp cluster")
 
 # stats::cutree will assign lines into k clusters
 group.membership <- stats::cutree(cluster.distance.matrix, k = GN)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP stats::cutree")
-Memory=GAPIT.Memory(Memory=Memory,Infor="cp stats::cutree")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP stats::cutree")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="cp stats::cutree")
 
 #calculate group kinship
 if(kinship.group == "Mean"){
@@ -2142,8 +2142,8 @@ KG=as.matrix(KG/CT)
 rownames(KG)=c(1:nrow(KG))
 colnames(KG)=c(1:ncol(KG))
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP calculation original")
-Memory=GAPIT.Memory(Memory=Memory,Infor="cp calculation original")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP calculation original")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="cp calculation original")
 
 
 
@@ -2176,15 +2176,15 @@ if(kinship.group == "Median")
     KG <- tapply(kInCol[,1], list(kInCol[,2], kInCol[,3]), median)
 } #this is end of brancing "Mean" and the rest
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP calculation")
-Memory=GAPIT.Memory(Memory=Memory,Infor="cp calculation")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP calculation")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="cp calculation")
 
 # add line names
 GA <- data.frame(group.membership)
 GA <- data.frame(cbind(as.character(line.names),as.numeric(group.membership) ))
 
-#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP Final")
-#Memory=GAPIT.Memory(Memory=Memory,Infor="CP Final")
+##Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="CP Final")
+##Memory=GAPIT.Memory(Memory=Memory,Infor="CP Final")
 
 #utils::write.table(KG, paste("KG_from_", kinship.group, "_Method.txt"), quote = FALSE, sep = "\t", row.names = FALSE,col.names = FALSE)
 
@@ -2486,63 +2486,64 @@ return(Z)
 
 ##############################################################################################
 GAPIT.Memory <- function(Memory =NULL,Infor){
-#Object: To report memory usage
-#Output: Memory
-#Authors: Zhiwu Zhang
-# Last update: June 6, 2011
-##############################################################################################
-gc()
-size <- utils::memory.size()
-#print(paste("Memory usage: ",size," for", Infor))
-if(is.null(Memory)) {
-Increased=0
-Memory =cbind(Infor,size ,Increased)
-}else{
-Increased=0
-Memory.current=cbind(Infor,size ,Increased)
-Memory=rbind(Memory,Memory.current)
-Memory[nrow(Memory),3]=as.numeric(as.matrix(Memory[nrow(Memory),2]))-as.numeric(as.matrix(Memory[nrow(Memory)-1,2]))
-}
+  #Object: To report memory usage
+  #Output: Memory
+  #Authors: Zhiwu Zhang
+  # Last update: June 6, 2011
+  ##############################################################################################
+  # gc()
+  # size <- utils::memory.size()
+  size <- sum(gc()[,2])
+  #print(paste("Memory usage: ",size," for", Infor))
+  if(is.null(Memory)) {
+    Increased=0
+    Memory =cbind(Infor,size ,Increased)
+  }else{
+    Increased=0
+    Memory.current=cbind(Infor,size ,Increased)
+    Memory=rbind(Memory,Memory.current)
+    Memory[nrow(Memory),3]=as.numeric(as.matrix(Memory[nrow(Memory),2]))-as.numeric(as.matrix(Memory[nrow(Memory)-1,2]))
+  }
 
-return (Memory)
+  return (Memory)
 }#end of GAPIT.Memory function
 
 ##############################################################################################
 GAPIT.Memory.Object <- function(name.of.trait="Trait"){
-# Object: To report memoery usage
-# Authors: Heuristic Andrew
-# http://heuristically.wordpress.com/2010/01/04/r-memory-usage-statistics-variable/
-# Modified by Zhiwu Zhang
-# Last update: may 29, 2011
-##############################################################################################
+  # Object: To report memoery usage
+  # Authors: Heuristic Andrew
+  # http://heuristically.wordpress.com/2010/01/04/r-memory-usage-statistics-variable/
+  # Modified by Zhiwu Zhang
+  # Last update: may 29, 2011
+  ##############################################################################################
 
-# print aggregate memory usage statistics
-print(paste('R is using', utils::memory.size(), 'MB out of limit', utils::memory.limit(), 'MB'))
+  # print aggregate memory usage statistics
+  print(paste('R is using', sum(gc()[,2]), 'MB out of limit Inf MB'))
 
-# create function to return matrix of memory consumption
-object.sizes <- function()
-{
+  # create function to return matrix of memory consumption
+  object.sizes <- function()
+  {
     return(rev(sort(sapply(ls(envir=.GlobalEnv), function (object.name)
-        utils::object.size(get(object.name))))))
-}
+      utils::object.size(get(object.name))))))
+  }
 
-# export file in table format
-memory=object.sizes()
-file=paste("GAPIT.", name.of.trait,".Memory.Object.csv" ,sep = "")
-utils::write.table(memory, file, quote = FALSE, sep = ",", row.names = TRUE,col.names = TRUE)
+  # export file in table format
+  memory=object.sizes()
+  file=paste("GAPIT.", name.of.trait,".Memory.Object.csv" ,sep = "")
+  utils::write.table(memory, file, quote = FALSE, sep = ",", row.names = TRUE,col.names = TRUE)
 
 
-# export file in PDF format
-grDevices::pdf(paste("GAPIT.", name.of.trait,".Memory.Object.pdf" ,sep = ""))
-# draw bar plot
-graphics::barplot(object.sizes(),
-    main="Memory usage by object", ylab="Bytes", xlab="Variable name",
-    col=grDevices::heat.colors(length(object.sizes())))
-# draw dot chart
-graphics::dotchart(object.sizes(), main="Memory usage by object", xlab="Bytes")
-# draw pie chart
-graphics::pie(object.sizes(), main="Memory usage by object")
-grDevices::dev.off()
+  # export file in PDF format
+  grDevices::pdf(paste("GAPIT.", name.of.trait,".Memory.Object.pdf" ,sep = ""))
+  # draw bar plot
+  graphics::barplot(object.sizes(),
+                    main="Memory usage by object", ylab="Bytes", xlab="Variable name",
+                    col=grDevices::heat.colors(length(object.sizes())))
+  # draw dot chart
+  graphics::dotchart(object.sizes(), main="Memory usage by object", xlab="Bytes")
+  # draw pie chart
+  graphics::pie(object.sizes(), main="Memory usage by object")
+  grDevices::dev.off()
 }
 
 
@@ -4403,8 +4404,8 @@ GAPIT.Genotype <- function(G=NULL,GD=NULL,GM=NULL,KI=NULL,
 
 print("Genotyping: numericalization, sampling kinship, PCs and much more...")
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype start")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype start")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype start")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype start")
 
 #Create logical variables
 byData=!is.null(G) | !is.null(GD)
@@ -4505,8 +4506,8 @@ if(is.null(GD) & !is.null(GM) & (is.null(GP)&is.null(GK)) &kinship.algorithm!="S
 #if(byData&(!is.null(file.path))) stop ("APIT Ssays: You have provided geotype data. file.path should not be provided!")
 
 #print("Pass compatibility of input")
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype loaded")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype loaded")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Genotype loaded")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Genotype loaded")
 
 #Inital GLD
 GLD=NULL
@@ -4523,23 +4524,23 @@ if(!is.null(GD) )
 {
 GT=as.matrix(GD[,1])  #get taxa
 GD=as.matrix(GD[,-1]) #remove taxa column
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GT created from GD)")
-Memory=GAPIT.Memory(Memory=Memory,Infor="GT created from GD")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="GT created from GD)")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="GT created from GD")
 }
 
 #Hapmap format
 if(!is.null(G))
 {
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before HapMap")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Before HapMap")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before HapMap")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Before HapMap")
 
 #Convert HapMap to numerical
 print(paste("Converting genotype...",sep=""))
 hm=GAPIT.HapMap(G,SNP.effect=SNP.effect,SNP.impute=SNP.impute)
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after HapMap")
-Memory=GAPIT.Memory(Memory=Memory,Infor="after HapMap")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after HapMap")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="after HapMap")
 
 
 #Extracting SNP for LD plot
@@ -4557,13 +4558,13 @@ if(!is.null(LD.chromosome)){
   GLD=NULL
 }
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="HapMap")
-Memory=GAPIT.Memory(Memory=Memory,Infor="HapMap")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="HapMap")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="HapMap")
 print(paste("Converting genotype done.",sep=""))
 #rm(G)
 #gc()
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="G removed")
-Memory=GAPIT.Memory(Memory=Memory,Infor="G removed")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="G removed")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="G removed")
 
 GT=hm$GT
 GD=hm$GD
@@ -4572,16 +4573,16 @@ GI=hm$GI
 
 rm(hm)
 gc()
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="hm removed")
-Memory=GAPIT.Memory(Memory=Memory,Infor="hm removed")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="hm removed")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="hm removed")
 }
 
 #From files
 if(!byData & byFile){
 #print("Loading genotype from files...")
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="byFile")
-Memory=GAPIT.Memory(Memory=Memory,Infor="byFile")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="byFile")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="byFile")
 
   numFileUsed=file.to
   if(!needKinPC)numFileUsed=file.from
@@ -4603,8 +4604,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="byFile")
     while(numSNP==file.fragment) {     #this is problematic if the read end at the last line
     print(paste("Reading file: ",file,"Fragment: ",frag))
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before Fragment")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Before Fragment")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before Fragment")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Before Fragment")
 
       myFRG=GAPIT.Fragment( file.path=file.path,file.from=file.from, file.to=file.to,file.total=file.total,file.G=file.G,file.Ext.G=file.Ext.G,
                             seed=seed,SNP.fraction=SNP.fraction,SNP.effect=SNP.effect,SNP.impute=SNP.impute,genoFormat=genoFormat,
@@ -4614,8 +4615,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before Fragment")
    #print(paste("numSNP after while is ",numSNP))
      #print(paste("OK with file: ",file,"Fragment: ",frag))
 
-     Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="After Fragment")
-     Memory=GAPIT.Memory(Memory=Memory,Infor="After Fragment")
+     #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="After Fragment")
+     #Memory=GAPIT.Memory(Memory=Memory,Infor="After Fragment")
 
 
       if(is.null(GT) & !is.null(myFRG$GT))GT= as.matrix(myFRG$GT)
@@ -4671,8 +4672,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before Fragment")
       if(!needKinPC)numSNP=0  #force to end the while loop
       if(is.null(myFRG))numSNP=0  #force to end the while loop
 
-     Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="END this Fragment")
-     Memory=GAPIT.Memory(Memory=Memory,Infor="END this Fragment")
+     #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="END this Fragment")
+     #Memory=GAPIT.Memory(Memory=Memory,Infor="END this Fragment")
 
 
 
@@ -4685,8 +4686,8 @@ Memory=GAPIT.Memory(Memory=Memory,Infor="Before Fragment")
 
 #print("file loaded")
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Sampling genotype")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Sampling genotype")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Sampling genotype")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Sampling genotype")
 
 #Plot thirt part kinship
 if(!is.null(KI) &file.output) {
@@ -4700,28 +4701,28 @@ if(!is.null(KI) &file.output) {
     colnames(theKin)=KI[,1]
     rownames(theKin)=KI[,1]
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="set kinship")
-Memory=GAPIT.Memory(Memory=Memory,Infor="set kinship")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="set kinship")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="set kinship")
 
     print("Creating heat map for kinship...")
     grDevices::pdf(paste("GAPIT.Kin.thirdPart.pdf",sep=""), width = 12, height = 12)
     graphics::par(mar = c(25,25,25,25))
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="prepare heatmap")
-Memory=GAPIT.Memory(Memory=Memory,Infor="prepare heatmap")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="prepare heatmap")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="prepare heatmap")
 
     heatmap.2(theKin,  cexRow =.2, cexCol = 0.2, col=rev(grDevices::heat.colors(256)), scale="none", symkey=FALSE, trace="none")
     grDevices::dev.off()
     print("Kinship heat map PDF created!")
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="plot heatmap")
-Memory=GAPIT.Memory(Memory=Memory,Infor="plot heatmap")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="plot heatmap")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="plot heatmap")
 
 
   } #end of if(nrow(KI)<1000)
 } #end of if(!is.null(KI))
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before SUPER")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Before SUPER")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before SUPER")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Before SUPER")
 
 #SUPER
 if(!is.null(GP) & kinship.algorithm=="SUPER" & !is.null(bin.size) & !is.null(inclosure.size)){
@@ -4739,8 +4740,8 @@ if(!is.null(GP) & kinship.algorithm=="SUPER" & !is.null(bin.size) & !is.null(inc
 
 }
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before creating kinship")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Before creating kinship")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before creating kinship")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Before creating kinship")
 
 
 #Create kinship from genotype if not provide
@@ -4795,26 +4796,26 @@ if(is.null(KI) & (!is.null(GD) |!is.null(GK)) & kinship.algorithm!="SUPER")
   rm(theKin)
   gc()
 
-  Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Estimating kinship")
-  Memory=GAPIT.Memory(Memory=Memory,Infor="Estimating kinship")
+  #Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Estimating kinship")
+  #Memory=GAPIT.Memory(Memory=Memory,Infor="Estimating kinship")
   print("Kinship created!")
 }  #end of if(is.null(KI)&!is.null(GD))
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after creating kinship")
-Memory=GAPIT.Memory(Memory=Memory,Infor="after creating kinship")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after creating kinship")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="after creating kinship")
 
 
 #Create PC
 PC=NULL
 if(PCA.total>0){
 PC=GAPIT.PCA(X = GD, taxa = GT, PC.number = PCA.total,file.output=file.output)
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PCA")
-Memory=GAPIT.Memory(Memory=Memory,Infor="PCA")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="PCA")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="PCA")
 print("PC created")
 }
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before LD plot")
-Memory=GAPIT.Memory(Memory=Memory,Infor="Before LD plot")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="Before LD plot")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="Before LD plot")
 
 #LD plot
 #print("LD section")
@@ -4875,8 +4876,8 @@ print("LD heatmap crated")
 } #end of #if(nrow(GLD)>1)
 }#end of if(!is.null(GLD))
 
-Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after LD plot")
-Memory=GAPIT.Memory(Memory=Memory,Infor="after LD plot")
+#Timmer=GAPIT.Timmer(Timmer=Timmer,Infor="after LD plot")
+#Memory=GAPIT.Memory(Memory=Memory,Infor="after LD plot")
 
 
 #print("Genotype successfully acomplished")

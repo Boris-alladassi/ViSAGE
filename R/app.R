@@ -50,12 +50,22 @@ run_visage <- function() {
                                                                                      shiny::numericInput("numChr", "Number of chromosomes", value = 1, min = 1),
                                                                                      shiny::numericInput("totalSeg", "Number of segregation sites", value = 1, min = 1)),
                                                              shiny::conditionalPanel(condition = "input.founderchoice == 'Using external data'",
-                                                                                     shiny::div(shiny::fileInput(inputId = "popgeno", label = "Upload the genotype data"),
-                                                                                                title = "Upload a .csv or .txt file with individuals as rows and snps as columns,
-                                                                                                and the first column is for the individuals names"),
-                                                                                     shiny::div(shiny::fileInput(inputId = "popgenmap", label = "Upload the genetic map"),
-                                                                                                title = "Upload a .csv or .txt file with snps as rows and three columns labeled in the following order:
-                                                                                                markerName, chromosome, and position"),
+                                                                                     shiny::fileInput(inputId = "popgeno",
+                                                                                                      label = shiny::tags$span("Upload the genotype data",
+                                                                                                                               shiny::tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                             style = "color:#0072B2;",
+                                                                                                                                             title ="Upload a .csv or .txt file with individuals as rows and snps as columns, and the first column is for the individuals names."
+                                                                                                                                             )),
+                                                                                                      accept = c(".csv", ".txt")
+                                                                                                      ),
+                                                                                     shiny::fileInput(inputId = "popgenmap",
+                                                                                                      label = shiny::tags$span("Upload the genetic map",
+                                                                                                                               shiny::tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                             style = "color:#0072B2;",
+                                                                                                                                             title ="Upload a .csv or .txt file with snps as rows and three columns labeled in the following order: markerName, chromosome, and position."
+                                                                                                                               )),
+                                                                                                      accept = c(".csv", ".txt")
+                                                                                                      ),
                                                                                      shiny::uiOutput(outputId = "summaryInfo")),
                                                              shiny::actionButton(inputId = "createfounder", "Create founders", class = "btn btn-success")
                                                  ), #End of Founders card
@@ -247,7 +257,7 @@ run_visage <- function() {
                                                                                               label = shiny::tags$span("Upload phenotypic data",
                                                                                                                        shiny::tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                      style = "color:#0072B2;",
-                                                                                                                                     title = "Further information ")),
+                                                                                                                                     title = "A .csv or txt file for phenotypic data: place the genotype or accession names in the first column and the traits values in the remaining columns.")),
                                                                                               accept = c(".csv", ".txt")),
 
                                                                              shiny::uiOutput("gwaschoosetrait", label = "Select the trait shiny::column"),
@@ -255,32 +265,42 @@ run_visage <- function() {
                                                                                               label = shiny::tags$span("Upload genomic data (HapMap)",
                                                                                                                        shiny::tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                      style = "color:#0072B2;",
-                                                                                                                                     title = "Further information ")),
+                                                                                                                                     title = "A .csv or .txt file for HapMap file: it should be in the standard HapMap format, with marker metadata in the first 11 columns and genotype calls for individual accessions in the remaining columns.")),
                                                                                               accept = c(".csv", ".txt")),
 
                                                                              shiny::fileInput(inputId = "genodtgwas",
                                                                                               label = shiny::tags$span("Upload genomic data (Numerical)",
                                                                                                                        shiny::tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                      style = "color:#0072B2;",
-                                                                                                                                     title = "Further information ")),
+                                                                                                                                     title = "A .csv or .txt file for numerical data format: place the genotype or accession names in the first column and the genomic marker scores in the remaining columns."
+                                                                                                                                     )),
                                                                                               accept = c(".csv", ".txt")),
 
                                                                              shiny::fileInput(inputId = "genomapgwas",
                                                                                               label = shiny::tags$span("Upload genetic map (Numerical)",
                                                                                                                        shiny::tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                      style = "color:#0072B2;",
-                                                                                                                                     title = "Further information ")),
+                                                                                                                                     title = "For numerical data, please provide a .csv or .txt file for genetic map with three columns: marker names in the first column, chromosome numbers in the second, and physical positions (bp) in the third."
+                                                                                                                                     )),
                                                                                               accept = c(".csv", ".txt")),
 
                                                                              shiny::fileInput(inputId = "qmatrix",
                                                                                               label = shiny::tags$span("Upload population structure Q matrix",
                                                                                                                        shiny::tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                      style = "color:#0072B2;",
-                                                                                                                                     title = "The assumption of the presence of population structure implies the presence of subsets of individuals more closely related to each other than to individuals in other subsets.The Q matrix can be obtained from PCA or STRUCTURE analysis."
+                                                                                                                                     title = "A .csv or .txt file for Q matrix: A measure of population structure obtained from STRUCTURE or ADMIXTURE analysis. You can also use the scores from PCA, If not provided, GAPIT will compute it using the number of PCA axes selected."
                                                                                                                                      )),
-                                                                                              accept = c(".csv", ".txt")),
+                                                                                              accept = c(".csv", ".txt")
+                                                                                              ),
 
-                                                                             shiny::fileInput("kmatrix", "Upload kinship K matrix")
+                                                                             shiny::fileInput(inputId = "kmatrix",
+                                                                                              label = shiny::tags$span("Upload kinship K matrix",
+                                                                                                                       shiny::tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                     style = "color:#0072B2;",
+                                                                                                                                     title = "A .csv or .txt file for K matrix: A square matrix of pairwise genetic relatedness, with genotype/accession names in both the rows and columns. If not provided, GAPIT will compute it."
+                                                                                                                                     )),
+                                                                                              accept = c(".csv", ".txt")
+                                                                                              )
                                                                            ), #End of conditional panel for using own data
                                                                            shiny::selectInput("gwasmodel", label = "Select one GWAS model", choices = c("GLM", "MLM"), selected = "MLM"),
                                                                            shiny::numericInput("numpcs", "Enter number of PCA axes", value = 3, min = 1),
@@ -376,8 +396,26 @@ run_visage <- function() {
 
                                                                            ), #End of simulated data conditional panel
                                                                            shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data'",
-                                                                                                   shiny::fileInput("phenodtgp", "Upload phenotypic data for training set"),
-                                                                                                   shiny::fileInput("traingenodtgp", "Upload genomic data for training set")
+                                                                                                   ### Phenotypic data for training population
+                                                                                                   shiny::fileInput(inputId = "phenodtgp",
+                                                                                                                    label = shiny::tags$span("Upload phenotypic data for training set",
+                                                                                                                                             shiny::tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                           style = "color:#0072B2;",
+                                                                                                                                                           title = "Upload a .csv or .txt file. Place the individuals names in the first column and the traits values in the remaining columns."
+
+                                                                                                                                             )),
+                                                                                                                    accept = c(".csv", ".txt")
+                                                                                                                    ),
+                                                                                                   ### Genomic data training population
+                                                                                                   shiny::fileInput(inputId = "traingenodtgp",
+                                                                                                                    label = shiny::tags$span("Upload genomic data for training set",
+                                                                                                                                             shiny::tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                           style = "color:#0072B2;",
+                                                                                                                                                           title = "Upload a .csv or .txt file with individuals as rows and markers as columns.Place the individual names in the first column."
+
+                                                                                                                                             )),
+                                                                                                                    accept = c(".csv", ".txt")
+                                                                                                   ),
                                                                            ), #End of conditional panel for using own data
 
                                                                            shiny::uiOutput("choosetrait"),
@@ -396,7 +434,16 @@ run_visage <- function() {
                                                                                                                            shiny::uiOutput("gpgeneration2")),
 
                                                                                                    shiny::conditionalPanel(condition = "input.gpdtchoice == 'Using my own data'",
-                                                                                                                           shiny::fileInput("testgenodtgp", "Upload genomic data for prediction set")),
+                                                                                                                           shiny::fileInput(inputId = "testgenodtgp",
+                                                                                                                                            label = shiny::tags$span("Upload genomic data for prediction set",
+                                                                                                                                                                     shiny::tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                                                   style = "color:#0072B2;",
+                                                                                                                                                                                   title = "Upload a .csv or .txt file. Place individuals names in the first column and the markers in the remaining columns."
+
+                                                                                                                                                                     )),
+                                                                                                                                            accept = c(".csv", ".txt")
+                                                                                                                                            )
+                                                                                                   ),
 
                                                                                                    shiny::selectInput(inputId = "GSselType", label = "Choose a selection type you wish to apply to the GEBVs",
                                                                                                                       choices = c("Directional_higher", "Directional_lower",
@@ -1320,9 +1367,7 @@ run_visage <- function() {
     #                    suggestiveline = F, #bh_threshold(gwas_final$P), #Benjamini-Hoschberg FDR, blue line
     #                    genomewideline = F) ## -log10(0.05/nrow(gwas_final))Bonferroni correction, red line
     # })
-
-    output$manhattanplot <- shiny::renderPlot({
-
+    gwas_manhattan_plot <- shiny::reactive({
       if(input$gwasdtchoice == "Using simulated data"){
         shiny::req(gwas_formatted(), base_pop())
         gwas_final <- gwas_formatted()
@@ -1341,13 +1386,18 @@ run_visage <- function() {
       }
     })
 
+    output$manhattanplot <- shiny::renderPlot({
+      shiny::req(gwas_manhattan_plot())
+      gwas_manhattan_plot()
+    })
+
     ### Creating the Q-Q plot
 
     output$qqplot <- shiny::renderPlot({
       shiny::req(gwas_out())
       # GAPIT.QQ(P.values = gwas_out()$GWAS[, 4], plot.type = "P_values",
       #          name.of.trait = "Trait1")
-      qqman::qq(pvector = gwas_out()$GWAS[, 4])
+      qqman::qq(pvector = gwas_out()$GWAS[,4])
     })
 
     ## Download GWAS results
@@ -1366,14 +1416,15 @@ run_visage <- function() {
       filename = function(){
         paste0("Manhattan_plot_", Sys.Date(), ".jpeg")
       },
+
       content = function(file){
-        shiny::req(output$manhattanplot())
+        shiny::req(gwas_manhattan_plot())
         # grDevices::jpeg(file, width = 8, height = 4, res = 300, units = "in")
         # qqman::manhattan(x= gwas_formatted(), #col = c("#0455A4", "#FF5F05"),
         #                  highlight = unlist(base_pop()[[3]]))
         # grDevices::dev.off()
         ggplot2::ggsave(filename = file, width = 8, height = 4,
-                        plot = output$manhattanplot(),  dpi = 300)
+                        plot = gwas_manhattan_plot(),  dpi = 300)
       }
     )
     ## Download Q-Q plot

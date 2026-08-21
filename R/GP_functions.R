@@ -92,7 +92,7 @@ genomic_prediction_rrblup <- function(
         Z = snp
       )
 
-      gebv <- as.vector(snp %*% model$u) + model$beta
+      gebv <- as.vector(snp %*% model$u) + as.vector(model$beta)
       names(gebv) <- names(y)
 
       all_results[[length(all_results) + 1]] <- data.frame(
@@ -185,7 +185,7 @@ predict_gebv_rrblup <- function(
   ## -----------------------------
   ## Prediction
   ## -----------------------------
-  gebv <- as.vector(snp_aligned %*% marker_effects) + grand_mean
+  gebv <- as.vector(snp_aligned %*% marker_effects) + as.vector(grand_mean)
   names(gebv) <- rownames(snp_aligned)
 
   gebv_df <- data.frame(

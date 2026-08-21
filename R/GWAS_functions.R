@@ -378,18 +378,9 @@ manhattan_plot <- function(df, bh_threshold = NULL,
 
       ggplot2::geom_point(
         data = dt_highlight,
-        ggplot2::aes(
-          x = pos_cum,
-          y = -log10(P),
-          color = "highlight"
-        ),
-        shape = 19
-      ) +
+        ggplot2::aes(x = pos_cum, y = -log10(P), color = "highlight"),shape = 19) +
 
-      ggplot2::scale_color_manual(
-        values = c(highlight = "green1"),
-        guide = "none"
-      )
+      ggplot2::scale_color_manual(values = c(highlight = "green1"), guide = "none")
   }
 
   # Final plot formatting
